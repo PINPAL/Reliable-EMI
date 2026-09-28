@@ -1,7 +1,3 @@
-### Added
+### Changed
 
-- Added a config option to switch to the search tab when searching.
-
-### Fixed
-
-- Fixed possible CME.
+- Renamed group tooltip from "item(s)" to just "items".
