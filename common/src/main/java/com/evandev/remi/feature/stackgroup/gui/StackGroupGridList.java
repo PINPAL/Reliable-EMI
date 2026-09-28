@@ -104,7 +104,7 @@ public class StackGroupGridList extends GridList<StackGroup> {
             if (super.mouseClicked(mouseX, mouseY, button)) return true;
             if (button != 0 || group == null) return false;
 
-            EmiGroupStack cachedStack = StackGroupManager.groupToGroupStacks.get(group);
+            EmiGroupStack cachedStack = StackGroupManager.getGroupStack(group);
             if (cachedStack == null || cachedStack.itemsNew == null) return false;
 
             boolean canExpand = cachedStack.itemsNew.size() > 8;
@@ -146,7 +146,7 @@ public class StackGroupGridList extends GridList<StackGroup> {
 
         public boolean handleDropdownClick(double mouseX, double mouseY) {
             if (!isExpanded || group == null) return false;
-            EmiGroupStack cachedStack = StackGroupManager.groupToGroupStacks.get(group);
+            EmiGroupStack cachedStack = StackGroupManager.getGroupStack(group);
             if (cachedStack == null || cachedStack.itemsNew == null) return false;
 
             int startX = getX() + BORDER_WIDTH + PADDING;
@@ -175,7 +175,7 @@ public class StackGroupGridList extends GridList<StackGroup> {
             if (draggedIndex == -1 || button != 0) return super.mouseReleased(mouseX, mouseY, button);
 
             if (!isExpanded) {
-                EmiGroupStack cachedStack = StackGroupManager.groupToGroupStacks.get(group);
+                EmiGroupStack cachedStack = StackGroupManager.getGroupStack(group);
                 if (cachedStack != null && cachedStack.itemsNew != null) {
                     int startX = getX() + BORDER_WIDTH + PADDING;
                     int itemY = getY() + BORDER_WIDTH + PADDING + ScreenManager.ENTRY_SIZE;
@@ -195,7 +195,7 @@ public class StackGroupGridList extends GridList<StackGroup> {
         public void handleDropdownRelease(double mouseX, double mouseY, int button) {
             if (draggedIndex == -1 || button != 0 || group == null) return;
 
-            EmiGroupStack cachedStack = StackGroupManager.groupToGroupStacks.get(group);
+            EmiGroupStack cachedStack = StackGroupManager.getGroupStack(group);
             if (cachedStack != null && cachedStack.itemsNew != null) {
                 int startX = getX() + BORDER_WIDTH + PADDING;
                 int itemY = getY() + BORDER_WIDTH + PADDING + ScreenManager.ENTRY_SIZE;
@@ -238,7 +238,7 @@ public class StackGroupGridList extends GridList<StackGroup> {
         public void renderEntry(GuiGraphics guiGraphics, int mouseX, int mouseY, int startX, int startY, float partialTick) {
             if (group == null) return;
 
-            EmiGroupStack cachedStack = StackGroupManager.groupToGroupStacks.get(group);
+            EmiGroupStack cachedStack = StackGroupManager.getGroupStack(group);
             if (cachedStack == null || cachedStack.itemsNew == null) return;
 
             var font = Minecraft.getInstance().font;
@@ -349,7 +349,7 @@ public class StackGroupGridList extends GridList<StackGroup> {
             if (group == null) return Component.empty();
 
             Component baseName;
-            EmiGroupStack cachedStack = StackGroupManager.groupToGroupStacks.get(group);
+            EmiGroupStack cachedStack = StackGroupManager.getGroupStack(group);
             if (cachedStack != null) {
                 baseName = cachedStack.getName();
             } else {

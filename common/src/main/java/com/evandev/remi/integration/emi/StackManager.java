@@ -13,39 +13,38 @@ import dev.emi.emi.search.EmiSearch;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class StackManager {
-    public static final Map<SidebarType, Set<ResourceLocation>> expandedStackGroups = new HashMap<>();
+    public static final Map<SidebarType, Set<ResourceLocation>> expandedStackGroups = new ConcurrentHashMap<>();
+    private static final Object LOCK = new Object();
     private static final Map<SidebarType, Integer> sidebarVersions = new EnumMap<>(SidebarType.class);
-    public static List<EmiStack> indexStacks = EmiStackList.filteredStacks;
-    public static List<EmiStack> sourceStacks = List.of();
-    public static List<EmiStack> searchedStacks = List.of();
-    public static List<EmiStack> displayedStacks = new ArrayList<>();
-    public static List<EmiStack> unsearchedStacks = new ArrayList<>();
+    public static volatile List<EmiStack> indexStacks = EmiStackList.filteredStacks;
+    public static volatile List<EmiStack> sourceStacks = List.of();
+    public static volatile List<EmiStack> searchedStacks = List.of();
+    public static volatile List<EmiStack> displayedStacks = new ArrayList<>();
+    public static volatile List<EmiStack> unsearchedStacks = new ArrayList<>();
     public static EmiStack[][] stackGrid = new EmiStack[0][0];
-    private static List<EmiStack> groupedStacks = List.of();
-    private static List<EmiStack> groupedUnsearchedStacks = List.of();
-    private static List<EmiStack> groupedIndexStacks = List.of();
+    private static volatile List<EmiStack> groupedStacks = List.of();
+    private static volatile List<EmiStack> groupedUnsearchedStacks = List.of();
+    private static volatile List<EmiStack> groupedIndexStacks = List.of();
     private static List<EmiStack> lastRepopulatedDisplayedStacks;
     private static List<EmiStack> lastRepopulatedUnsearchedStacks;
-    private static int globalStacksVersion;
-
-    public static int getStacksVersion() {
-        return globalStacksVersion;
-    }
+    private static final AtomicInteger globalStacksVersion = new AtomicInteger();
 
     public static int getStacksVersion(SidebarType type) {
-        if (type == null) return globalStacksVersion;
-        return sidebarVersions.getOrDefault(type, 0) + globalStacksVersion;
+        if (type == null) return globalStacksVersion.get();
+        return sidebarVersions.getOrDefault(type, 0) + globalStacksVersion.get();
     }
 
     public static void invalidateStacks() {
-        globalStacksVersion++;
+        globalStacksVersion.incrementAndGet();
     }
 
     public static void invalidateStacks(SidebarType type) {
         if (type == null) {
-            globalStacksVersion++;
+            globalStacksVersion.incrementAndGet();
         } else {
             sidebarVersions.put(type, sidebarVersions.getOrDefault(type, 0) + 1);
         }
@@ -60,10 +59,13 @@ public class StackManager {
     public static void reload() {
         invalidateStacks();
         expandedStackGroups.clear();
-        indexStacks = EmiStackList.filteredStacks;
-        groupedIndexStacks = List.of();
-        StackGroupManager.buildGroupedEmiStacksAndStackGroupToContents(indexStacks);
-        updateSourceStacks(indexStacks);
+        List<EmiStack> index = EmiStackList.filteredStacks;
+        StackGroupManager.buildGroupedEmiStacksAndStackGroupToContents(index);
+        synchronized (LOCK) {
+            indexStacks = index;
+            groupedIndexStacks = List.of();
+        }
+        updateSourceStacks(index);
     }
 
     public static void repopulateIndexPanelsIfDirty() {
@@ -76,23 +78,39 @@ public class StackManager {
     }
 
     public static void updateSourceStacks(List<EmiStack> src) {
-        sourceStacks = src;
-        buildStacks(src);
-        groupedUnsearchedStacks = groupedStacks;
-        unsearchedStacks = displayedStacks;
+        List<EmiStack> searched = filterHidden(src);
+        List<EmiStack> grouped = buildGroupedStacks(searched);
+        List<EmiStack> displayed = buildDisplayedStacks(grouped);
+        synchronized (LOCK) {
+            sourceStacks = src;
+            searchedStacks = searched;
+            groupedStacks = grouped;
+            displayedStacks = displayed;
+            groupedUnsearchedStacks = grouped;
+            unsearchedStacks = displayed;
+        }
     }
 
     public static void search(List<EmiStack> src, String keyword) {
-        sourceStacks = src;
-        groupedUnsearchedStacks = buildGroupedStacks(filterHidden(src));
-        unsearchedStacks = buildDisplayedStacks(groupedUnsearchedStacks);
+        List<EmiStack> grouped = buildGroupedStacks(filterHidden(src));
+        List<EmiStack> displayed = buildDisplayedStacks(grouped);
+        synchronized (LOCK) {
+            sourceStacks = src;
+            groupedUnsearchedStacks = grouped;
+            unsearchedStacks = displayed;
+        }
         EmiSearch.search(keyword);
     }
 
     public static void buildStacks(List<EmiStack> searched) {
-        searchedStacks = filterHidden(searched);
-        groupedStacks = buildGroupedStacks(searchedStacks);
-        displayedStacks = buildDisplayedStacks(groupedStacks);
+        List<EmiStack> filtered = filterHidden(searched);
+        List<EmiStack> grouped = buildGroupedStacks(filtered);
+        List<EmiStack> displayed = buildDisplayedStacks(grouped);
+        synchronized (LOCK) {
+            searchedStacks = filtered;
+            groupedStacks = grouped;
+            displayedStacks = displayed;
+        }
     }
 
     private static List<EmiStack> filterHidden(List<EmiStack> stacks) {
@@ -155,7 +173,7 @@ public class StackManager {
         if (type == null) type = SidebarType.INDEX;
 
         Layout.textureDirty = true;
-        Set<ResourceLocation> set = expandedStackGroups.computeIfAbsent(type, k -> new HashSet<>());
+        Set<ResourceLocation> set = expandedStackGroups.computeIfAbsent(type, k -> ConcurrentHashMap.newKeySet());
         boolean isExpanded = !set.contains(gs.group.getId());
 
         if (isExpanded) {
@@ -167,10 +185,12 @@ public class StackManager {
         gs.isExpanded = isExpanded;
 
         if (type == SidebarType.INDEX) {
-            displayedStacks = buildDisplayedStacks(groupedStacks);
-            unsearchedStacks = groupedUnsearchedStacks == groupedStacks
-                    ? displayedStacks
-                    : buildDisplayedStacks(groupedUnsearchedStacks);
+            synchronized (LOCK) {
+                displayedStacks = buildDisplayedStacks(groupedStacks);
+                unsearchedStacks = groupedUnsearchedStacks == groupedStacks
+                        ? displayedStacks
+                        : buildDisplayedStacks(groupedUnsearchedStacks);
+            }
         }
         EmiScreenManager.repopulatePanels(type);
         EmiScreenManager.recalculate();

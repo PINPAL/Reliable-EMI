@@ -211,7 +211,7 @@ public class Layout {
         if (emiStack instanceof GroupedEmiStack<?> ges) {
             if (StackManager.isGroupExpanded(type, ges.stackGroup.getId())) return ges.stackGroup;
         }
-        var groupedStacks = StackGroupManager.stackToGroupedStacks.get(emiStack);
+        var groupedStacks = StackGroupManager.getStackToGroupedStacks().get(emiStack);
         if (groupedStacks != null) {
             for (var gs : groupedStacks) {
                 if (StackManager.isGroupExpanded(type, gs.stackGroup.getId())) return gs.stackGroup;

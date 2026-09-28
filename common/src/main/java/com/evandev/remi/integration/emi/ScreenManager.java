@@ -4,6 +4,7 @@ import com.evandev.remi.config.ReliableEmiConfig;
 import com.evandev.remi.feature.creativemodetab.CreativeModeTabManager;
 import com.evandev.remi.feature.creativemodetab.gui.CreativeModeTabGui;
 import com.evandev.remi.mixin.emi.accessor.EmiScreenManagerAccessor;
+import dev.emi.emi.runtime.EmiReloadManager;
 import dev.emi.emi.screen.EmiScreenManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -15,6 +16,7 @@ public class ScreenManager {
     public static Component customIndexTitle;
     private static Component rawCustomIndexTitle;
     private static Screen screen;
+    private static boolean initPendingReload;
 
     public static boolean isSearching() {
         return indexScreenSpace != null && indexScreenSpace.search
@@ -30,9 +32,22 @@ public class ScreenManager {
         refreshCustomIndexTitle();
         if (screen == null) return;
 
+        if (!EmiReloadManager.isLoaded()) {
+            initPendingReload = true;
+            return;
+        }
+        initPendingReload = false;
+
         if (ReliableEmiConfig.enableCreativeModeTabs) {
             CreativeModeTabGui.initialize(screen);
             CreativeModeTabManager.initialize();
+        }
+    }
+
+    public static void retryInitIfReloaded() {
+        if (initPendingReload && EmiReloadManager.isLoaded()) {
+            initPendingReload = false;
+            EmiScreenManager.forceRecalculate();
         }
     }
 

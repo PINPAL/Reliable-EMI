@@ -201,6 +201,7 @@ public abstract class EmiScreenManagerMixin {
 
     @Inject(method = "recalculate", at = @At("HEAD"))
     private static void remi$updateWorkstationCraftables(CallbackInfo ci) {
+        ScreenManager.retryInitIfReloaded();
         WorkstationSidebarManager.updateWorkstationCraftables();
         StackManager.repopulateIndexPanelsIfDirty();
     }

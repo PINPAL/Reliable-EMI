@@ -29,14 +29,9 @@ import java.util.function.BiFunction;
 
 @SuppressWarnings("UnstableApiUsage")
 public class StackGroupManager {
-    public static final List<StackGroup> stackGroups = new ArrayList<>();
-    public static final List<EmiStack> groupedEmiStacks = new ArrayList<>();
-    public static final IdentityHashMap<EmiStack, List<GroupedEmiStack<EmiStack>>> stackToGroupedStacks = new IdentityHashMap<>();
     private static final Map<String, BiFunction<ResourceLocation, JsonObject, StackGroup>> typeRegistry = new HashMap<>();
-    private static final Map<ResourceLocation, List<GroupedEmiStack<EmiStack>>> itemToGroupedStacks = new HashMap<>();
-    private static final Map<StackGroup, String> groupLowerIds = new IdentityHashMap<>();
-    private static final Map<StackGroup, String> groupLowerNames = new IdentityHashMap<>();
-    public static Map<StackGroup, EmiGroupStack> groupToGroupStacks = new HashMap<>();
+    public static volatile List<StackGroup> stackGroups = List.of();
+    private static volatile GroupIndex index = GroupIndex.EMPTY;
 
     static {
         registerType("remi:group", (id, json) -> EmiStackGroup.parse(json, id));
@@ -84,7 +79,15 @@ public class StackGroupManager {
     }
 
     public static Map<ResourceLocation, List<GroupedEmiStack<EmiStack>>> getItemToGroupedStacks() {
-        return itemToGroupedStacks;
+        return index.itemToGroupedStacks();
+    }
+
+    public static Map<EmiStack, List<GroupedEmiStack<EmiStack>>> getStackToGroupedStacks() {
+        return index.stackToGroupedStacks();
+    }
+
+    public static EmiGroupStack getGroupStack(StackGroup group) {
+        return index.groupToGroupStacks().get(group);
     }
 
     public static void registerType(String type, BiFunction<ResourceLocation, JsonObject, StackGroup> factory) {
@@ -281,19 +284,18 @@ public class StackGroupManager {
             for (EmiStack stack : tabSource) allowedIds.add(stack.getId());
         }
 
+        GroupIndex idx = index;
         for (StackGroup group : stackGroups) {
             if (!group.isEnabled) continue;
-            EmiGroupStack gs = groupToGroupStacks.get(group);
+            EmiGroupStack gs = idx.groupToGroupStacks().get(group);
             if (gs == null) continue;
 
-            String lowerId = groupLowerIds.computeIfAbsent(group, g -> g.getId().toString().toLowerCase(Locale.ROOT));
-            String lowerName = groupLowerNames.get(group);
+            String lowerId = idx.groupLowerIds().get(group);
+            if (lowerId == null) lowerId = group.getId().toString().toLowerCase(Locale.ROOT);
+            String lowerName = idx.groupLowerNames().get(group);
             if (lowerName == null) {
                 Component nameComp = gs.getName();
-                if (nameComp != null) {
-                    lowerName = nameComp.getString().toLowerCase(Locale.ROOT);
-                    groupLowerNames.put(group, lowerName);
-                }
+                if (nameComp != null) lowerName = nameComp.getString().toLowerCase(Locale.ROOT);
             }
 
             boolean match = lowerId.contains(lower) || lowerName != null && lowerName.contains(lower);
@@ -309,10 +311,10 @@ public class StackGroupManager {
 
     public static void reload() {
         StackManager.invalidateStacks();
-        stackGroups.clear();
-        groupLowerIds.clear();
-        groupLowerNames.clear();
-        if (!ReliableEmiConfig.enableStackGroups) return;
+        if (!ReliableEmiConfig.enableStackGroups) {
+            stackGroups = List.of();
+            return;
+        }
 
         Map<ResourceLocation, StackGroup> loaded = new LinkedHashMap<>();
 
@@ -386,7 +388,7 @@ public class StackGroupManager {
         List<StackGroup> sorted = new ArrayList<>(loaded.values());
         sorted.sort(Comparator.<StackGroup>comparingInt(g -> -g.priority)
                 .thenComparing(g -> g.getId().toString()));
-        stackGroups.addAll(sorted);
+        stackGroups = List.copyOf(sorted);
     }
 
     private static void loadGroup(ResourceLocation id, JsonObject json, Map<ResourceLocation, StackGroup> loaded) {
@@ -435,13 +437,14 @@ public class StackGroupManager {
 
     public static List<EmiStack> buildGroupedStacks(List<EmiStack> source) {
         List<EmiStack> result = new ArrayList<>(source.size());
+        GroupIndex idx = index;
         Set<StackGroup> addedGroups = Collections.newSetFromMap(new IdentityHashMap<>());
         IdentityHashMap<StackGroup, List<GroupedEmiStack<EmiStack>>> groupMatches = new IdentityHashMap<>();
 
         for (EmiStack emiStack : source) {
-            List<GroupedEmiStack<EmiStack>> variants = stackToGroupedStacks.get(emiStack);
+            List<GroupedEmiStack<EmiStack>> variants = idx.stackToGroupedStacks().get(emiStack);
             if (variants == null) {
-                List<GroupedEmiStack<EmiStack>> idVariants = itemToGroupedStacks.get(emiStack.getId());
+                List<GroupedEmiStack<EmiStack>> idVariants = idx.itemToGroupedStacks().get(emiStack.getId());
                 if (idVariants == null) continue;
                 variants = new ArrayList<>();
                 for (var v : idVariants) {
@@ -455,9 +458,9 @@ public class StackGroupManager {
         }
 
         for (EmiStack emiStack : source) {
-            List<GroupedEmiStack<EmiStack>> variants = stackToGroupedStacks.get(emiStack);
+            List<GroupedEmiStack<EmiStack>> variants = idx.stackToGroupedStacks().get(emiStack);
             if (variants == null) {
-                List<GroupedEmiStack<EmiStack>> idVariants = itemToGroupedStacks.get(emiStack.getId());
+                List<GroupedEmiStack<EmiStack>> idVariants = idx.itemToGroupedStacks().get(emiStack.getId());
                 if (idVariants != null) {
                     variants = new ArrayList<>();
                     for (var v : idVariants) {
@@ -478,7 +481,7 @@ public class StackGroupManager {
                 if (matches == null) continue;
                 if (group.isEnabled && matches.size() >= 2) {
                     if (addedGroups.add(group)) {
-                        EmiGroupStack cached = groupToGroupStacks.get(group);
+                        EmiGroupStack cached = idx.groupToGroupStacks().get(group);
                         if (cached != null && cached.itemsNew.size() == matches.size()) {
                             result.add(cached);
                         } else {
@@ -498,6 +501,7 @@ public class StackGroupManager {
     public static List<EmiIngredient> buildGroupedIngredients(List<? extends EmiIngredient> source, SidebarType type) {
         if (source == null || source.isEmpty()) return List.of();
         List<EmiIngredient> result = new ArrayList<>(source.size());
+        GroupIndex idx = index;
         Set<StackGroup> addedGroups = Collections.newSetFromMap(new IdentityHashMap<>());
         IdentityHashMap<StackGroup, List<GroupedEmiStack<EmiStack>>> groupMatches = new IdentityHashMap<>();
 
@@ -507,9 +511,9 @@ public class StackGroupManager {
             EmiStack primary = ing instanceof EmiStack es ? es : (!ing.getEmiStacks().isEmpty() ? ing.getEmiStacks().getFirst() : null);
             if (primary != null) {
                 ingredientToPrimaryStack.put(ing, primary);
-                List<GroupedEmiStack<EmiStack>> variants = stackToGroupedStacks.get(primary);
+                List<GroupedEmiStack<EmiStack>> variants = idx.stackToGroupedStacks().get(primary);
                 if (variants == null) {
-                    List<GroupedEmiStack<EmiStack>> idVariants = itemToGroupedStacks.get(primary.getId());
+                    List<GroupedEmiStack<EmiStack>> idVariants = idx.itemToGroupedStacks().get(primary.getId());
                     if (idVariants != null) {
                         variants = new ArrayList<>();
                         for (var v : idVariants) {
@@ -534,9 +538,9 @@ public class StackGroupManager {
                 continue;
             }
 
-            List<GroupedEmiStack<EmiStack>> variants = stackToGroupedStacks.get(primary);
+            List<GroupedEmiStack<EmiStack>> variants = idx.stackToGroupedStacks().get(primary);
             if (variants == null) {
-                List<GroupedEmiStack<EmiStack>> idVariants = itemToGroupedStacks.get(primary.getId());
+                List<GroupedEmiStack<EmiStack>> idVariants = idx.itemToGroupedStacks().get(primary.getId());
                 if (idVariants != null) {
                     variants = new ArrayList<>();
                     for (var v : idVariants) {
@@ -578,17 +582,16 @@ public class StackGroupManager {
     }
 
     public static void buildGroupedEmiStacksAndStackGroupToContents(List<EmiStack> source) {
-        groupedEmiStacks.clear();
-        itemToGroupedStacks.clear();
-        stackToGroupedStacks.clear();
-
+        List<StackGroup> groups = stackGroups;
+        Map<ResourceLocation, List<GroupedEmiStack<EmiStack>>> localItemMap = new HashMap<>();
+        Map<EmiStack, List<GroupedEmiStack<EmiStack>>> localStackMap = new IdentityHashMap<>();
         Map<StackGroup, EmiGroupStack> localGroupMap = new IdentityHashMap<>();
-        for (StackGroup g : stackGroups) localGroupMap.put(g, new EmiGroupStack(g, new ArrayList<>()));
+        for (StackGroup g : groups) localGroupMap.put(g, new EmiGroupStack(g, new ArrayList<>()));
 
         for (EmiStack stack : source) {
             ResourceLocation stackId = stack.getId();
 
-            for (StackGroup group : stackGroups) {
+            for (StackGroup group : groups) {
                 if (!group.isEnabled) continue;
 
                 Set<ResourceLocation> optimizedIds = group.getOptimizedIds();
@@ -597,21 +600,19 @@ public class StackGroupManager {
                 }
 
                 if (group.match(stack)) {
-                    registerMatch(group, stack, localGroupMap);
+                    registerMatch(group, stack, localGroupMap, localItemMap, localStackMap);
                     break;
                 }
             }
         }
 
-        groupToGroupStacks = localGroupMap;
-
-        groupLowerIds.clear();
-        groupLowerNames.clear();
-        for (StackGroup g : stackGroups) {
-            groupLowerIds.put(g, g.getId().toString().toLowerCase(Locale.ROOT));
+        Map<StackGroup, String> localLowerIds = new IdentityHashMap<>();
+        Map<StackGroup, String> localLowerNames = new IdentityHashMap<>();
+        for (StackGroup g : groups) {
+            localLowerIds.put(g, g.getId().toString().toLowerCase(Locale.ROOT));
             EmiGroupStack gs = localGroupMap.get(g);
             if (gs != null && gs.getName() != null) {
-                groupLowerNames.put(g, gs.getName().getString().toLowerCase(Locale.ROOT));
+                localLowerNames.put(g, gs.getName().getString().toLowerCase(Locale.ROOT));
             }
         }
 
@@ -635,24 +636,29 @@ public class StackGroupManager {
                 });
             }
         }
+
+        index = new GroupIndex(localItemMap, localStackMap, localGroupMap, localLowerIds, localLowerNames);
     }
 
-    private static void registerMatch(StackGroup group, EmiStack stack, Map<StackGroup, EmiGroupStack> groupStacksMap) {
+    private static void registerMatch(StackGroup group, EmiStack stack, Map<StackGroup, EmiGroupStack> groupStacksMap,
+                                      Map<ResourceLocation, List<GroupedEmiStack<EmiStack>>> itemMap,
+                                      Map<EmiStack, List<GroupedEmiStack<EmiStack>>> stackMap) {
         EmiGroupStack groupStack = groupStacksMap.get(group);
         if (groupStack == null) return;
         GroupedEmiStack<EmiStack> groupedStack = new GroupedEmiStack<>(stack, group);
         boolean added = groupStack.append(groupedStack);
         if (added && group.isEnabled) {
-            boolean alreadyGrouped = false;
-            for (EmiStack gs : groupedEmiStacks) {
-                if (gs.isEqual(stack, Comparison.compareComponents())) {
-                    alreadyGrouped = true;
-                    break;
-                }
-            }
-            if (!alreadyGrouped) groupedEmiStacks.add(stack);
-            itemToGroupedStacks.computeIfAbsent(stack.getId(), k -> new ArrayList<>()).add(groupedStack);
-            stackToGroupedStacks.computeIfAbsent(stack, k -> new ArrayList<>()).add(groupedStack);
+            itemMap.computeIfAbsent(stack.getId(), k -> new ArrayList<>()).add(groupedStack);
+            stackMap.computeIfAbsent(stack, k -> new ArrayList<>()).add(groupedStack);
         }
+    }
+
+    private record GroupIndex(
+            Map<ResourceLocation, List<GroupedEmiStack<EmiStack>>> itemToGroupedStacks,
+            Map<EmiStack, List<GroupedEmiStack<EmiStack>>> stackToGroupedStacks,
+            Map<StackGroup, EmiGroupStack> groupToGroupStacks,
+            Map<StackGroup, String> groupLowerIds,
+            Map<StackGroup, String> groupLowerNames) {
+        static final GroupIndex EMPTY = new GroupIndex(Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
     }
 }
