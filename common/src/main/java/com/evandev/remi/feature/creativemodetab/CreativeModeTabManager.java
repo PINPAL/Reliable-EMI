@@ -35,6 +35,8 @@ public class CreativeModeTabManager {
     private static boolean isSelectingVanillaByEmiPlusPlus = false;
     private static boolean isSelectingEmiPlusPlusByVanilla = false;
     private static CreativeModeTab indexCreativeModeTab;
+    private static CreativeModeTab tabBeforeSearch;
+    private static boolean wasSearching = false;
     private static Method recreativeIconMethod = null;
     private static boolean checkedRecreativeMethod = false;
 
@@ -280,8 +282,40 @@ public class CreativeModeTabManager {
         CreativeModeTab notHiddenTab = tab;
         if (shouldHideTab(tab) && indexCreativeModeTab != null) notHiddenTab = indexCreativeModeTab;
 
-        int tabIndex = creativeModeTabs.indexOf(notHiddenTab);
-        if (tabIndex == -1) return;
+        isSelectingEmiPlusPlusByVanilla = true;
+        boolean selected = selectCreativeModeTab(notHiddenTab);
+        isSelectingEmiPlusPlusByVanilla = false;
+        if (!selected) return;
+        cms.searchBox.setCanLoseFocus(true);
+        cms.searchBox.setFocused(false);
+    }
+
+    public static void onSearchQueryChanged(String query) {
+        boolean searching = query != null && !query.isEmpty();
+        if (searching == wasSearching) return;
+        wasSearching = searching;
+
+        if (!ReliableEmiConfig.switchToSearchTabWhenSearching || !ReliableEmiConfig.enableCreativeModeTabs
+                || CreativeModeTabGui.tabCount == 0 || indexCreativeModeTab == null) {
+            tabBeforeSearch = null;
+            return;
+        }
+
+        if (searching) {
+            if (currentTab != null && currentTab != indexCreativeModeTab) {
+                tabBeforeSearch = currentTab;
+                selectCreativeModeTab(indexCreativeModeTab);
+            }
+        } else if (tabBeforeSearch != null) {
+            CreativeModeTab previous = tabBeforeSearch;
+            tabBeforeSearch = null;
+            if (currentTab == indexCreativeModeTab) selectCreativeModeTab(previous);
+        }
+    }
+
+    private static boolean selectCreativeModeTab(CreativeModeTab tab) {
+        int tabIndex = creativeModeTabs.indexOf(tab);
+        if (tabIndex == -1) return false;
 
         if (tabIndex < scrollOffset) {
             scrollOffset = tabIndex;
@@ -291,13 +325,10 @@ public class CreativeModeTabManager {
 
         List<ItemTab> page = updateTabs();
         int localIndex = tabIndex - scrollOffset;
-        if (localIndex < 0 || localIndex >= page.size()) return;
+        if (localIndex < 0 || localIndex >= page.size()) return false;
 
         CreativeModeTabGui.selectTab(localIndex, false);
-        isSelectingEmiPlusPlusByVanilla = true;
         onTabSelected(page.get(localIndex));
-        cms.searchBox.setCanLoseFocus(true);
-        cms.searchBox.setFocused(false);
-        isSelectingEmiPlusPlusByVanilla = false;
+        return true;
     }
 }

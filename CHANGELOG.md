@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [4.7.8] - 2026-09-28
 
+### Added
+
+- Added a config option to switch to the search tab when searching.
+
 ### Fixed
 
 - Fixed possible CME.

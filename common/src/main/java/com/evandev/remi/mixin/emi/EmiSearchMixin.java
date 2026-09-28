@@ -1,13 +1,16 @@
 package com.evandev.remi.mixin.emi;
 
 import com.evandev.remi.config.ReliableEmiConfig;
+import com.evandev.remi.feature.creativemodetab.CreativeModeTabManager;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import dev.emi.emi.search.EmiSearch;
 import net.minecraft.client.searchtree.SuffixArray;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Slice;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = EmiSearch.class, remap = false)
 public class EmiSearchMixin {
@@ -28,5 +31,10 @@ public class EmiSearchMixin {
         if (ReliableEmiConfig.searchById) {
             original.call(instance, object, contents);
         }
+    }
+
+    @Inject(method = "search", at = @At("HEAD"))
+    private static void onSearch(String query, CallbackInfo ci) {
+        CreativeModeTabManager.onSearchQueryChanged(query);
     }
 }

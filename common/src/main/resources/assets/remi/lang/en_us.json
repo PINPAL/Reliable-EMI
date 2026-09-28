@@ -109,6 +109,8 @@
   "remi.configuration.searchTooltipPrefix.tooltip": "Enable using the $ prefix in the search bar to filter items by tooltip text.",
   "remi.configuration.showCreativeTabNameInSearchbar": "Show Tab Name in Search Bar",
   "remi.configuration.showCreativeTabNameInSearchbar.tooltip": "Displays the name of the currently selected creative mode tab in the EMI search bar when hovered.",
+  "remi.configuration.switchToSearchTabWhenSearching": "Switch to Search Tab When Searching",
+  "remi.configuration.switchToSearchTabWhenSearching.tooltip": "If enabled, typing in the search bar switches to the Search Items tab, and clearing the search bar switches back to the previously selected tab.",
   "remi.configuration.maxSidebarTabs": "Sidebar Tab Count",
   "remi.configuration.maxSidebarTabs.tooltip": "Number of creative mode tabs to show on the sidebar per page (0 = auto based on available space).",
   "remi.configuration.enableCreativeModeTabs.tooltip": "Enable or disable the Creative Mode Tabs sidebar entirely.",

@@ -34,6 +34,7 @@ public class ReliableEmiConfig {
     public static CreativeTabTheme creativeTabTheme = CreativeTabTheme.SYNCED;
     public static boolean syncSelectedCreativeModeTab = true;
     public static boolean showCreativeTabNameInSearchbar = true;
+    public static boolean switchToSearchTabWhenSearching = true;
     public static int maxSidebarTabs = 0;
     public static int verticalTabsWidth = 28;
     public static int verticalTabsHeight = 24;
@@ -155,6 +156,7 @@ public class ReliableEmiConfig {
                     tabIconSize = data.tabIconSize;
                     syncSelectedCreativeModeTab = data.syncSelectedCreativeModeTab;
                     showCreativeTabNameInSearchbar = data.showCreativeTabNameInSearchbar;
+                    switchToSearchTabWhenSearching = data.switchToSearchTabWhenSearching;
                     maxSidebarTabs = data.maxSidebarTabs;
                     if (data.disabledCreativeModeTabs != null) {
                         disabledCreativeModeTabs = new ArrayList<>(data.disabledCreativeModeTabs);
@@ -278,6 +280,7 @@ public class ReliableEmiConfig {
         data.tabIconSize = tabIconSize;
         data.syncSelectedCreativeModeTab = syncSelectedCreativeModeTab;
         data.showCreativeTabNameInSearchbar = showCreativeTabNameInSearchbar;
+        data.switchToSearchTabWhenSearching = switchToSearchTabWhenSearching;
         data.maxSidebarTabs = maxSidebarTabs;
         data.disabledCreativeModeTabs = new ArrayList<>(disabledCreativeModeTabs);
         data.enableStackGroups = enableStackGroups;
@@ -352,6 +355,7 @@ public class ReliableEmiConfig {
         int tabIconSize = 16;
         boolean syncSelectedCreativeModeTab = true;
         boolean showCreativeTabNameInSearchbar = true;
+        boolean switchToSearchTabWhenSearching = false;
         int maxSidebarTabs = 0;
         List<String> disabledCreativeModeTabs = new ArrayList<>(List.of("minecraft:op_blocks"));
         boolean enableStackGroups = true;
