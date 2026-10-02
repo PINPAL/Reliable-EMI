@@ -6,15 +6,17 @@ import com.evandev.remi.integration.emi.ScreenManager;
 import com.google.common.collect.ImmutableList;
 import dev.emi.emi.config.SidebarTheme;
 import dev.emi.emi.screen.EmiScreenManager;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractContainerWidget;
 import net.minecraft.client.gui.components.TabButton;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.layouts.GridLayout;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -121,12 +123,17 @@ public class ItemTabNavigationBar extends AbstractContainerWidget {
     }
 
     @Override
-    public void renderWidget(@NotNull GuiGraphics raw, int mouseX, int mouseY, float partialTick) {
+    protected void extractWidgetRenderState(final @NonNull GuiGraphicsExtractor graphics, final int mouseX, final int mouseY, final float partialTick) {
         if (EmiScreenManager.isDisabled()) return;
-        tabButtons.forEach(b -> b.render(raw, mouseX, mouseY, partialTick));
+        tabButtons.forEach(b -> b.extractWidgetRenderState(graphics, mouseX, mouseY, partialTick));
     }
 
-    @Override
+	@Override
+	protected int contentHeight() {
+		return 0;
+	}
+
+	@Override
     public void setFocused(@Nullable GuiEventListener child) {
         super.setFocused(child);
         if (child instanceof TabButton tb) {
@@ -138,15 +145,15 @@ public class ItemTabNavigationBar extends AbstractContainerWidget {
         setFocused(child);
     }
 
-    @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+	@Override
+    public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
         for (TabButton child : tabButtons) {
-            if (child.mouseClicked(mouseX, mouseY, button)) {
+            if (child.mouseClicked(event, doubleClick)) {
                 setFocused(child);
                 return true;
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, doubleClick);
     }
 
     @Override

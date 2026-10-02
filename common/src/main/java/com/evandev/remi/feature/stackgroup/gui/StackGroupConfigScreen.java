@@ -9,11 +9,12 @@ import dev.emi.emi.screen.EmiScreenManager;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.StringWidget;
+import net.minecraft.client.gui.layouts.LayoutSettings;
 import net.minecraft.client.gui.layouts.LinearLayout;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -21,14 +22,14 @@ import java.util.Locale;
 import java.util.Set;
 
 public class StackGroupConfigScreen extends GridListConfigScreen {
-    private final Set<ResourceLocation> disabledStackGroups;
+    private final Set<Identifier> disabledStackGroups;
     private String searchQuery = "";
 
     public StackGroupConfigScreen(Screen parent) {
         super("stack_group_config", parent);
         this.disabledStackGroups = new HashSet<>();
         for (String s : ReliableEmiConfig.disabledStackGroups) {
-            disabledStackGroups.add(ResourceLocation.parse(s));
+            disabledStackGroups.add(Identifier.parse(s));
         }
     }
 
@@ -42,7 +43,8 @@ public class StackGroupConfigScreen extends GridListConfigScreen {
     @Override
     protected void buildLayout() {
         LinearLayout headerContent = LinearLayout.vertical().spacing(4);
-        headerContent.addChild(new StringWidget(title, font).alignCenter());
+//        headerContent.addChild(new StringWidget(title, font).alignCenter());
+	    headerContent.addChild(new StringWidget(title, font), LayoutSettings.defaults().alignHorizontallyCenter());
 
         EditBox searchBox = new EditBox(font, 0, 0, 200, 20, Component.translatable("remi.configuration.search"));
         searchBox.setResponder(s -> {
@@ -67,7 +69,7 @@ public class StackGroupConfigScreen extends GridListConfigScreen {
     @Override
     protected void save() {
         ReliableEmiConfig.disabledStackGroups = new ArrayList<>();
-        for (ResourceLocation loc : disabledStackGroups) {
+        for (Identifier loc : disabledStackGroups) {
             ReliableEmiConfig.disabledStackGroups.add(loc.toString());
         }
         ReliableEmiConfig.save();

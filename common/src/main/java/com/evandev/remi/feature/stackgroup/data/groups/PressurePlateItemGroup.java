@@ -3,13 +3,13 @@ package com.evandev.remi.feature.stackgroup.data.groups;
 import com.evandev.remi.feature.stackgroup.data.StackGroup;
 import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.PressurePlateBlock;
 
 public class PressurePlateItemGroup extends StackGroup {
     public PressurePlateItemGroup() {
-        super(ResourceLocation.withDefaultNamespace("pressure_plates"), null);
+        super(Identifier.withDefaultNamespace("pressure_plates"), null);
     }
 
     @Override

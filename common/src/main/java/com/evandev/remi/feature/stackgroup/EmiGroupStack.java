@@ -5,8 +5,6 @@ import com.evandev.remi.feature.stackgroup.data.EmiStackGroup;
 import com.evandev.remi.feature.stackgroup.data.StackGroup;
 import com.evandev.remi.integration.emi.ScreenManager;
 import com.evandev.remi.integration.sodium.SodiumCompat;
-import com.mojang.blaze3d.systems.RenderSystem;
-import dev.emi.emi.EmiPort;
 import dev.emi.emi.api.stack.Comparison;
 import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.config.EmiConfig;
@@ -15,26 +13,24 @@ import dev.emi.emi.runtime.EmiHidden;
 import dev.emi.emi.screen.StackBatcher;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.*;
 
 public class EmiGroupStack extends EmiStack implements StackBatcher.Batchable {
-    private static final ResourceLocation EXPANDED_TEXTURE = ReliableEmi.res("textures/gui/stack_group_expanded.png");
-    private static final ResourceLocation EXPANDED_INDICATOR_TEXTURE = ReliableEmi.res("textures/gui/stack_group_indicator_expanded.png");
-    private static final ResourceLocation COLLAPSED_INDICATOR_TEXTURE = ReliableEmi.res("textures/gui/stack_group_indicator_collapsed.png");
+    private static final Identifier EXPANDED_TEXTURE = ReliableEmi.res("textures/gui/stack_group_expanded.png");
+    private static final Identifier EXPANDED_INDICATOR_TEXTURE = ReliableEmi.res("textures/gui/stack_group_indicator_expanded.png");
+    private static final Identifier COLLAPSED_INDICATOR_TEXTURE = ReliableEmi.res("textures/gui/stack_group_indicator_collapsed.png");
     private static int visibilityVersion = 0;
 
     public final StackGroup group;
@@ -65,10 +61,11 @@ public class EmiGroupStack extends EmiStack implements StackBatcher.Batchable {
     private static void collectSprites(EmiStack stack, Set<TextureAtlasSprite> out) {
         ItemStack is = stack.getItemStack();
         if (is.isEmpty()) return;
-        BakedModel model = Minecraft.getInstance().getItemRenderer().getModel(is, null, null, 0);
-        for (BakedQuad quad : EmiPort.getQuads(model)) {
-            if (quad != null) out.add(quad.getSprite());
-        }
+        ItemModel model = Minecraft.getInstance().getModelManager().getItemModel(stack.getId());
+		// TODO: THIS SHIT IS CHALKED
+//        for (BakedQuad quad : EmiPort.getQuads(model)) {
+//            if (quad != null) out.add(quad.getSprite());
+//        }
     }
 
     /**
@@ -119,7 +116,7 @@ public class EmiGroupStack extends EmiStack implements StackBatcher.Batchable {
     }
 
     @Override
-    public ResourceLocation getId() {
+    public Identifier getId() {
         return group.getId();
     }
 
@@ -152,14 +149,14 @@ public class EmiGroupStack extends EmiStack implements StackBatcher.Batchable {
     }
 
     @Override
-    public void render(GuiGraphics raw, int x, int y, float delta, int flags) {
+    public void render(GuiGraphicsExtractor raw, int x, int y, float delta, int flags) {
         EmiDrawContext context = EmiDrawContext.wrap(raw);
         int es = ScreenManager.ENTRY_SIZE;
 
         if (isExpanded) {
-            RenderSystem.enableBlend();
-            context.drawTexture(EXPANDED_TEXTURE, x - 1, y - 1, 0, 0, 0, es, es, es, es);
-            RenderSystem.disableBlend();
+//            RenderSystem.enableBlend();
+            context.drawTexture(EXPANDED_TEXTURE, x - 1, y - 1, 0, 0, es, es, es, es);
+//            RenderSystem.disableBlend();
         }
 
         if (batchedSprites != null && (flags & RENDER_ICON) == 0) {
@@ -171,29 +168,29 @@ public class EmiGroupStack extends EmiStack implements StackBatcher.Batchable {
         List<GroupedEmiStack<EmiStack>> items = getItems();
         if (!items.isEmpty()) {
             context.push();
-            context.matrices().translate(x + 1.6F, y + 1.6F, 0F);
-            context.matrices().scale(0.8F, 0.8F, 0.8F);
+            context.matrices().translate(x + 1.6F, y + 1.6F);
+            context.matrices().scale(0.8F, 0.8F);
 
             if (items.size() == 1) {
                 items.getFirst().render(raw, 0, 0, delta, flags);
             } else if (items.size() == 2) {
-                context.matrices().translate(0.5F, 0F, 0F);
+                context.matrices().translate(0.5F, 0F);
                 items.get(1).render(raw, 1, -1, delta, flags);
-                context.matrices().translate(0F, 0F, 10F);
+                context.matrices().translate(0F, 0F);
                 items.getFirst().render(raw, -2, 1, delta, flags);
             } else if (items.size() >= 3) {
                 items.get(2).render(raw, 3, -2, delta, flags);
-                context.matrices().translate(0F, 0F, 10F);
+                context.matrices().translate(0F, 0F);
                 items.get(1).render(raw, 0, 0, delta, flags);
-                context.matrices().translate(0F, 0F, 10F);
+                context.matrices().translate(0F, 0F);
                 items.get(0).render(raw, -3, 2, delta, flags);
             }
             context.pop();
         }
 
-        RenderSystem.enableBlend();
-        context.drawTexture(isExpanded ? EXPANDED_INDICATOR_TEXTURE : COLLAPSED_INDICATOR_TEXTURE, x - 1, y - 1, 200, 0, 0, es, es, es, es);
-        RenderSystem.disableBlend();
+//        RenderSystem.enableBlend();
+        context.drawTexture(isExpanded ? EXPANDED_INDICATOR_TEXTURE : COLLAPSED_INDICATOR_TEXTURE, x - 1, y - 1, 200, 0, es, es, es, es);
+//        RenderSystem.disableBlend();
     }
 
     @Override
@@ -215,18 +212,18 @@ public class EmiGroupStack extends EmiStack implements StackBatcher.Batchable {
     }
 
     @Override
-    public void renderForBatch(MultiBufferSource vcp, GuiGraphics draw, int x, int y, int z, float delta) {
+    public void renderForBatch(StackBatcher.EmiBufferSource vcp, GuiGraphicsExtractor draw, int x, int y, int z, float delta) {
         List<GroupedEmiStack<EmiStack>> items = getItems();
         if (items.isEmpty()) return;
         EmiDrawContext context = EmiDrawContext.wrap(draw);
         context.push();
-        context.matrices().translate(x + 1.6F, y + 1.6F, 0F);
-        context.matrices().scale(0.8F, 0.8F, 0.8F);
+        context.matrices().translate(x + 1.6F, y + 1.6F);
+        context.matrices().scale(0.8F, 0.8F);
 
         if (items.size() == 1) {
             items.getFirst().renderForBatch(vcp, draw, 0, 0, z, delta);
         } else if (items.size() == 2) {
-            context.matrices().translate(0.5F, 0F, 0F);
+            context.matrices().translate(0.5F, 0F);
             items.get(1).renderForBatch(vcp, draw, 1, -1, z, delta);
             items.getFirst().renderForBatch(vcp, draw, -2, 1, z + 10, delta);
         } else {
@@ -281,14 +278,14 @@ public class EmiGroupStack extends EmiStack implements StackBatcher.Batchable {
 
         if (group instanceof EmiStackGroup esg && esg.getTagKey() != null) {
             TagKey<?> tk = esg.getTagKey();
-            String regName = tk.registry().location().getPath().replace('/', '.');
+            String regName = tk.registry().identifier().getPath().replace('/', '.');
             String ns = tk.location().getNamespace();
             String path = tk.location().getPath().replace('/', '.');
 
             String k1 = "tag." + regName + "." + ns + "." + path;
             if (Language.getInstance().has(k1)) return Component.translatable(k1);
 
-            String k2 = "tag." + tk.registry().location().getNamespace() + "." + regName + "." + ns + "." + path;
+            String k2 = "tag." + tk.registry().identifier().getNamespace() + "." + regName + "." + ns + "." + path;
             if (Language.getInstance().has(k2)) return Component.translatable(k2);
 
             String k3 = "tag." + ns + "." + path;

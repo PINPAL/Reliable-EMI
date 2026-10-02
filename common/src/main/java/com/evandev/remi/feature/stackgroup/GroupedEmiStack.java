@@ -5,12 +5,11 @@ import dev.emi.emi.api.stack.Comparison;
 import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.screen.StackBatcher;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
@@ -34,7 +33,7 @@ public class GroupedEmiStack<T extends EmiStack> extends EmiStack implements Sta
     }
 
     @Override
-    public void render(GuiGraphics draw, int x, int y, float delta, int flags) {
+    public void render(GuiGraphicsExtractor draw, int x, int y, float delta, int flags) {
         if (realIngredient != null) {
             realIngredient.render(draw, x, y, delta, flags);
         } else {
@@ -58,7 +57,7 @@ public class GroupedEmiStack<T extends EmiStack> extends EmiStack implements Sta
     }
 
     @Override
-    public void renderForBatch(MultiBufferSource vcp, GuiGraphics draw, int x, int y, int z, float delta) {
+    public void renderForBatch(StackBatcher.EmiBufferSource vcp, GuiGraphicsExtractor draw, int x, int y, int z, float delta) {
         if (realStack instanceof StackBatcher.Batchable b) b.renderForBatch(vcp, draw, x, y, z, delta);
     }
 
@@ -122,7 +121,7 @@ public class GroupedEmiStack<T extends EmiStack> extends EmiStack implements Sta
     }
 
     @Override
-    public ResourceLocation getId() {
+    public Identifier getId() {
         return realStack.getId();
     }
 

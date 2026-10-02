@@ -10,14 +10,14 @@ import dev.emi.emi.registry.EmiStackList;
 import dev.emi.emi.runtime.EmiHidden;
 import dev.emi.emi.screen.EmiScreenManager;
 import dev.emi.emi.search.EmiSearch;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class StackManager {
-    public static final Map<SidebarType, Set<ResourceLocation>> expandedStackGroups = new ConcurrentHashMap<>();
+    public static final Map<SidebarType, Set<Identifier>> expandedStackGroups = new ConcurrentHashMap<>();
     private static final Object LOCK = new Object();
     private static final Map<SidebarType, Integer> sidebarVersions = new EnumMap<>(SidebarType.class);
     public static volatile List<EmiStack> indexStacks = EmiStackList.filteredStacks;
@@ -50,9 +50,9 @@ public class StackManager {
         }
     }
 
-    public static boolean isGroupExpanded(SidebarType type, ResourceLocation groupId) {
+    public static boolean isGroupExpanded(SidebarType type, Identifier groupId) {
         if (type == null) return false;
-        Set<ResourceLocation> set = expandedStackGroups.get(type);
+        Set<Identifier> set = expandedStackGroups.get(type);
         return set != null && set.contains(groupId);
     }
 
@@ -173,7 +173,7 @@ public class StackManager {
         if (type == null) type = SidebarType.INDEX;
 
         Layout.textureDirty = true;
-        Set<ResourceLocation> set = expandedStackGroups.computeIfAbsent(type, k -> ConcurrentHashMap.newKeySet());
+        Set<Identifier> set = expandedStackGroups.computeIfAbsent(type, k -> ConcurrentHashMap.newKeySet());
         boolean isExpanded = !set.contains(gs.group.getId());
 
         if (isExpanded) {

@@ -58,7 +58,7 @@ public class ReliableEmiConfigScreen {
                 .option(ButtonOption.createBuilder()
                         .name(ReliableEmi.text("configuration.disabledCreativeModeTabs.manage"))
                         .description(OptionDescription.of(ReliableEmi.text("configuration.disabledCreativeModeTabs.tooltip")))
-                        .action((screen, opt) -> Minecraft.getInstance().setScreen(new CreativeModeTabConfigScreen(screen)))
+                        .action((screen, opt) -> Minecraft.getInstance().gui.setScreen(new CreativeModeTabConfigScreen(screen)))
                         .build());
 
         boolean inWorld = Minecraft.getInstance().level != null;
@@ -81,7 +81,7 @@ public class ReliableEmiConfigScreen {
                         .description(OptionDescription.of(ReliableEmi.text(inWorld
                                 ? "configuration.disabledStackGroups.tooltip"
                                 : "configuration.disabledStackGroups.tooltip.unavailable")))
-                        .action((screen, opt) -> Minecraft.getInstance().setScreen(new StackGroupConfigScreen(screen)))
+                        .action((screen, opt) -> Minecraft.getInstance().gui.setScreen(new StackGroupConfigScreen(screen)))
                         .available(inWorld)
                         .build());
 

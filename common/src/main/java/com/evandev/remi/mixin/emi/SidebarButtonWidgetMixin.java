@@ -6,7 +6,7 @@ import com.evandev.remi.mixin.emi.accessor.SizedButtonWidgetAccessor;
 import dev.emi.emi.EmiRenderHelper;
 import dev.emi.emi.screen.EmiScreenManager;
 import dev.emi.emi.screen.widget.SidebarButtonWidget;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class SidebarButtonWidgetMixin {
 
     @Unique
-    private static final ResourceLocation WORKSTATION_TEXTURE = ReliableEmi.res("textures/gui/workstation_icon.png");
+    private static final Identifier WORKSTATION_TEXTURE = ReliableEmi.res("textures/gui/workstation_icon.png");
 
     @Final
     @Shadow

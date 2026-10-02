@@ -8,8 +8,10 @@ import dev.emi.emi.api.EmiInitRegistry;
 import dev.emi.emi.api.EmiRegistry;
 import dev.emi.emi.api.stack.EmiRegistryAdapter;
 import dev.emi.emi.api.stack.EmiStack;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.level.block.Block;
@@ -17,6 +19,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.Optional;
 
 @Mixin(value = VanillaPlugin.class, remap = false)
 public class VanillaPluginMixin {
@@ -41,11 +45,8 @@ public class VanillaPluginMixin {
             @SuppressWarnings("unchecked")
             Class<EntityType<?>> entityTypeClass = (Class) EntityType.class;
             registry.addRegistryAdapter(EmiRegistryAdapter.simple(entityTypeClass, BuiltInRegistries.ENTITY_TYPE, (entityType, changes, amount) -> {
-                SpawnEggItem egg = SpawnEggItem.byId(entityType);
-                if (egg != null) {
-                    return EmiStack.of(egg, amount);
-                }
-                return EmiStack.EMPTY;
+                Optional<Holder<Item>> egg = SpawnEggItem.byId(entityType);
+				return egg.isPresent() ? EmiStack.of(egg.get().value(), amount) : EmiStack.EMPTY;
             }));
         }
     }

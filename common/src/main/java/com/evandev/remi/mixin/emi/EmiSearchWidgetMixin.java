@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 @Mixin(EmiSearchWidget.class)
 public class EmiSearchWidgetMixin {
-    @WrapOperation(method = "renderWidget", at = @At(value = "INVOKE", target = "Ldev/emi/emi/runtime/EmiDrawContext;fill(IIIII)V", ordinal = 0))
+    @WrapOperation(method = "extractWidgetRenderState", at = @At(value = "INVOKE", target = "Ldev/emi/emi/runtime/EmiDrawContext;fill(IIIII)V", ordinal = 0))
     private void renderHighlightTop(EmiDrawContext instance, int x, int y, int width, int height, int color, Operation<Void> original) {
         if (!ReliableEmiConfig.searchWidgetUseVanillaTexture) {
             x = x - ReliableEmiConfig.searchWidgetHorizontalPadding + 1;
@@ -19,7 +19,7 @@ public class EmiSearchWidgetMixin {
         original.call(instance, x, y, width, height, color);
     }
 
-    @WrapOperation(method = "renderWidget", at = @At(value = "INVOKE", target = "Ldev/emi/emi/runtime/EmiDrawContext;fill(IIIII)V", ordinal = 1))
+    @WrapOperation(method = "extractWidgetRenderState", at = @At(value = "INVOKE", target = "Ldev/emi/emi/runtime/EmiDrawContext;fill(IIIII)V", ordinal = 1))
     private void renderHighlightBottom(EmiDrawContext instance, int x, int y, int width, int height, int color, Operation<Void> original) {
         if (!ReliableEmiConfig.searchWidgetUseVanillaTexture) {
             x = x - ReliableEmiConfig.searchWidgetHorizontalPadding + 1;
@@ -29,7 +29,7 @@ public class EmiSearchWidgetMixin {
         original.call(instance, x, y, width, height, color);
     }
 
-    @WrapOperation(method = "renderWidget", at = @At(value = "INVOKE", target = "Ldev/emi/emi/runtime/EmiDrawContext;fill(IIIII)V", ordinal = 2))
+    @WrapOperation(method = "extractWidgetRenderState", at = @At(value = "INVOKE", target = "Ldev/emi/emi/runtime/EmiDrawContext;fill(IIIII)V", ordinal = 2))
     private void renderHighlightLeft(EmiDrawContext instance, int x, int y, int width, int height, int color, Operation<Void> original) {
         if (!ReliableEmiConfig.searchWidgetUseVanillaTexture) {
             x = x - ReliableEmiConfig.searchWidgetHorizontalPadding + 1;
@@ -39,7 +39,7 @@ public class EmiSearchWidgetMixin {
         original.call(instance, x, y, width, height, color);
     }
 
-    @WrapOperation(method = "renderWidget", at = @At(value = "INVOKE", target = "Ldev/emi/emi/runtime/EmiDrawContext;fill(IIIII)V", ordinal = 3))
+    @WrapOperation(method = "extractWidgetRenderState", at = @At(value = "INVOKE", target = "Ldev/emi/emi/runtime/EmiDrawContext;fill(IIIII)V", ordinal = 3))
     private void renderHighlightRight(EmiDrawContext instance, int x, int y, int width, int height, int color, Operation<Void> original) {
         if (!ReliableEmiConfig.searchWidgetUseVanillaTexture) {
             x = x + ReliableEmiConfig.searchWidgetHorizontalPadding - 1;

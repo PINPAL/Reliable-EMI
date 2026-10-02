@@ -2,24 +2,26 @@ package com.evandev.remi.gui.components;
 
 import com.evandev.ReliableEmi;
 import com.evandev.remi.util.SidebarPanelWithScrollOffset;
-import com.mojang.blaze3d.systems.RenderSystem;
 import dev.emi.emi.config.SidebarTheme;
 import dev.emi.emi.screen.EmiScreenManager;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 public class ScrollbarWidget extends AbstractWidget {
     public static final int WIDTH = 16;
     private static final int MIN_THUMB_HEIGHT = 6;
-    private static final ResourceLocation TRACK_SPRITES = ReliableEmi.res("widget/scrollbar_track");
-    private static final ResourceLocation THUMB_SPRITES = ReliableEmi.res("widget/scrollbar_thumb");
-    private static final ResourceLocation VANILLA_TRACK_SPRITES = ReliableEmi.res("widget/scrollbar_track_vanilla");
-    private static final ResourceLocation VANILLA_THUMB_SPRITES = ReliableEmi.res("widget/scrollbar_thumb_vanilla");
-    private static final ResourceLocation VANILLA_BACKGROUND_SPRITES = ReliableEmi.res("widget/scrollbar_background_vanilla");
+    private static final Identifier TRACK_SPRITES = ReliableEmi.res("widget/scrollbar_track");
+    private static final Identifier THUMB_SPRITES = ReliableEmi.res("widget/scrollbar_thumb");
+    private static final Identifier VANILLA_TRACK_SPRITES = ReliableEmi.res("widget/scrollbar_track_vanilla");
+    private static final Identifier VANILLA_THUMB_SPRITES = ReliableEmi.res("widget/scrollbar_thumb_vanilla");
+    private static final Identifier VANILLA_BACKGROUND_SPRITES = ReliableEmi.res("widget/scrollbar_background_vanilla");
     private final EmiScreenManager.SidebarPanel panel;
     private boolean isDragging = false;
 
@@ -29,9 +31,9 @@ public class ScrollbarWidget extends AbstractWidget {
     }
 
     @Override
-    public final void renderWidget(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    public final void extractWidgetRenderState(@NotNull GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         if (this.visible) {
-            RenderSystem.enableBlend();
+//            RenderSystem.enableBlend();
             SidebarPanelWithScrollOffset scrollPanel = (SidebarPanelWithScrollOffset) panel;
 
             int ENTRY_SIZE = 18;
@@ -53,10 +55,10 @@ public class ScrollbarWidget extends AbstractWidget {
 
                 trackHeight += trackPadding * 2;
 
-                guiGraphics.blitSprite(VANILLA_BACKGROUND_SPRITES, x, y - headerOffset - panel.theme.verticalPadding, width, panelHeight + headerOffset);
-                guiGraphics.blitSprite(VANILLA_TRACK_SPRITES, x, y - trackPadding, width, trackHeight);
+                guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, VANILLA_BACKGROUND_SPRITES, x, y - headerOffset - panel.theme.verticalPadding, width, panelHeight + headerOffset);
+                guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, VANILLA_TRACK_SPRITES, x, y - trackPadding, width, trackHeight);
             } else {
-                guiGraphics.blitSprite(TRACK_SPRITES, x, y - trackPadding, width, trackHeight);
+                guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, TRACK_SPRITES, x, y - trackPadding, width, trackHeight);
 
             }
             int progress = scrollPanel.remi$getScrollOffsetRows();
@@ -74,27 +76,27 @@ public class ScrollbarWidget extends AbstractWidget {
             int end = start + thumbHeight;
 
             if (panel.theme == SidebarTheme.VANILLA) {
-                guiGraphics.blitSprite(VANILLA_THUMB_SPRITES, x, start, width, end - start);
+                guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, VANILLA_THUMB_SPRITES, x, start, width, end - start);
             } else {
-                guiGraphics.blitSprite(THUMB_SPRITES, x, start, width, end - start);
+                guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, THUMB_SPRITES, x, start, width, end - start);
             }
 
-            RenderSystem.disableBlend();
+//            RenderSystem.disableBlend();
         }
     }
 
     @Override
-    public void onClick(double mouseX, double mouseY) {
-        super.onClick(mouseX, mouseY);
-        updateScrollPosition(mouseY);
+    public void onClick(@NonNull MouseButtonEvent event, boolean doubleClick) {
+        super.onClick(event, doubleClick);
+        updateScrollPosition(event.y());
         this.isDragging = true;
     }
 
     @Override
-    protected void onDrag(double mouseX, double mouseY, double dragX, double dragY) {
-        super.onDrag(mouseX, mouseY, dragX, dragY);
+    protected void onDrag(@NonNull MouseButtonEvent event, double dragX, double dragY) {
+        super.onDrag(event, dragX, dragY);
         if (this.isDragging) {
-            updateScrollPosition(mouseY);
+            updateScrollPosition(event.y());
         }
     }
 

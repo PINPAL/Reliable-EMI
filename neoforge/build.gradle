@@ -11,11 +11,6 @@ neoForge {
         accessTransformers.from(at.absolutePath)
     }
 
-    parchment {
-        minecraftVersion = parchment_minecraft
-        mappingsVersion = parchment_version
-    }
-
     runs {
         configureEach {
             systemProperty('neoforge.enabledGameTestNamespaces', mod_id)
@@ -40,13 +35,13 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 dependencies {
     // EMI
-    implementation "dev.emi:emi-neoforge:${emi_version}"
+    implementation "curse.maven:semi-seasonal-emi-1706958:${semi_version_neoforge}"
 
     // YACL
     implementation "maven.modrinth:yacl:${yacl_version}-neoforge"
 
     // Mekanism
-    compileOnly "maven.modrinth:mekanism:5KzzycBT"
+//    compileOnly "maven.modrinth:mekanism:5KzzycBT"
 }
 
 publishMods {

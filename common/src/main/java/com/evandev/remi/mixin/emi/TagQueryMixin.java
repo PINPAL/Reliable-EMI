@@ -38,9 +38,14 @@ public class TagQueryMixin {
         );
 
         for (Registry<?> registry : registries) {
-            registry.getTagNames().filter(tagKey -> tagKey.location().toString().toLowerCase(Locale.ROOT).contains(lowerName)
-                    || tagKey.location().getPath().toLowerCase(Locale.ROOT).contains(lowerName)).forEach(tagKey -> {
-                TagEmiIngredient tagIngredient = new TagEmiIngredient(tagKey, 1);
+            registry
+              .getTags()
+              .filter(tagKey ->
+                        tagKey.key().location().toString().toLowerCase(Locale.ROOT).contains(lowerName)
+                        // TODO: why is this being checked again if toString returns: "namespace:path"
+                        || tagKey.key().location().getPath().toLowerCase(Locale.ROOT).contains(lowerName)
+              ).forEach(tagKey -> {
+                TagEmiIngredient tagIngredient = new TagEmiIngredient(tagKey.key(), 1);
                 for (EmiStack stack : tagIngredient.getEmiStacks()) {
                     if (stack != null && !stack.isEmpty()) {
                         this.valid.add(stack.getKey());

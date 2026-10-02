@@ -11,8 +11,8 @@ import dev.emi.emi.api.widget.WidgetHolder;
 import dev.emi.emi.config.EmiConfig;
 import dev.emi.emi.recipe.EmiTagRecipe;
 import dev.emi.emi.runtime.EmiDrawContext;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.resources.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -23,7 +23,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class EmiIngredientRecipeMixin {
 
     @Unique
-    private static final ResourceLocation BUTTONS_TEXTURE = ResourceLocation.fromNamespaceAndPath(ReliableEmi.MOD_ID, "textures/gui/buttons.png");
+    private static final Identifier BUTTONS_TEXTURE = Identifier.fromNamespaceAndPath(ReliableEmi.MOD_ID, "textures/gui/buttons.png");
 
     @Inject(method = "addWidgets", at = @At("TAIL"))
     public void addCreateStackGroupButton(WidgetHolder widgets, CallbackInfo ci) {
@@ -40,13 +40,13 @@ public class EmiIngredientRecipeMixin {
                     StackManager.reload();
                 }) {
             @Override
-            public void render(GuiGraphics draw, int mouseX, int mouseY, float delta) {
+            public void extractRenderState(GuiGraphicsExtractor draw, int mouseX, int mouseY, float delta) {
                 EmiDrawContext context = EmiDrawContext.wrap(draw);
                 boolean groupEnabled = StackGroupManager.isGroupEnabled(tagKey);
                 boolean hovered = getBounds().contains(mouseX, mouseY);
                 int currentV = groupEnabled ? 24 : 0;
                 if (hovered && this.isActive.getAsBoolean()) currentV += 12;
-                RenderSystem.enableDepthTest();
+//                RenderSystem.enableDepthTest();
                 context.drawTexture(texture, this.x, this.y, this.u, currentV, this.width, this.height);
             }
         });

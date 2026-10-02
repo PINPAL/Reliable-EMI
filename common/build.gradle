@@ -10,16 +10,11 @@ neoForge {
     if (at.exists()) {
         accessTransformers.from(at.absolutePath)
     }
-
-    parchment {
-        minecraftVersion = parchment_minecraft
-        mappingsVersion = parchment_version
-    }
 }
 
 dependencies {
     // EMI
-    compileOnly "dev.emi:emi-xplat-mojmap:${emi_version}"
+    compileOnly "curse.maven:semi-seasonal-emi-1706958:${semi_version_neoforge}"
 
     // YACL
     compileOnly "maven.modrinth:yacl:${yacl_version}-neoforge"

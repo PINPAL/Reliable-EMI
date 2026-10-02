@@ -1,26 +1,22 @@
 plugins {
     id 'multiloader-loader'
-    id 'fabric-loom'
+    id 'net.fabricmc.fabric-loom' version "${loom_version}"
 }
 
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
-    mappings loom.layered {
-        officialMojangMappings()
-        parchment("org.parchmentmc.data:parchment-${parchment_minecraft}:${parchment_version}@zip")
-    }
 
-    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
+    implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
 
     // EMI
-    modImplementation "dev.emi:emi-fabric:${emi_version}"
+    implementation "curse.maven:semi-seasonal-emi-1706958:${semi_version_fabric}"
 
     // Mod Menu
-    modImplementation "maven.modrinth:modmenu:${modmenu_version}"
+    implementation "maven.modrinth:modmenu:${modmenu_version}"
 
     // YACL
-    modImplementation "maven.modrinth:yacl:${yacl_version}-fabric"
+    implementation "maven.modrinth:yacl:${yacl_version}-fabric"
     implementation "org.quiltmc.parsers:json:0.3.0"
     implementation "org.quiltmc.parsers:gson:0.3.0"
     include "org.quiltmc.parsers:json:0.3.0"
@@ -47,8 +43,4 @@ loom {
             runDir('runs/server')
         }
     }
-}
-
-publishMods {
-    file = tasks.named("remapJar").flatMap { it.archiveFile }
 }

@@ -44,19 +44,20 @@ public class RegexTagQueryMixin {
         );
 
         for (Registry<?> registry : registries) {
-            registry.getTagNames().filter(tagKey -> {
-                return pat.matcher(tagKey.location().toString()).find();
-            }).forEach(tagKey -> {
-                TagEmiIngredient tagIngredient = new TagEmiIngredient(tagKey, 1);
-                for (EmiStack stack : tagIngredient.getEmiStacks()) {
-                    if (stack != null && !stack.isEmpty()) {
-                        this.valid.add(stack.getKey());
-                        if (stack.getItemStack() != null && !stack.getItemStack().isEmpty()) {
-                            this.valid.add(stack.getItemStack().getItem());
-                        }
-                    }
-                }
-            });
+	        registry
+	          .getTags()
+	          .filter(tagKey -> pat.matcher(tagKey.key().location().toString()).find())
+	          .forEach(tagKey -> {
+		          TagEmiIngredient tagIngredient = new TagEmiIngredient(tagKey.key(), 1);
+		          for (EmiStack stack : tagIngredient.getEmiStacks()) {
+			          if (stack != null && !stack.isEmpty()) {
+				          this.valid.add(stack.getKey());
+				          if (stack.getItemStack() != null && !stack.getItemStack().isEmpty()) {
+					          this.valid.add(stack.getItemStack().getItem());
+				          }
+			          }
+		          }
+	          });
         }
     }
 }

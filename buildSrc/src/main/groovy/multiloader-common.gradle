@@ -54,6 +54,22 @@ repositories {
         }
     }
 
+    exclusiveContent {
+        forRepository {
+            maven {
+                url "https://cursemaven.com"
+            }
+        }
+        filter {
+            includeGroup "curse.maven"
+        }
+    }
+
+    maven {
+        name = 'Quilt'
+        url = 'https://maven.quiltmc.org/repository/release/'
+    }
+
     maven {
         name = 'Fabric'
         url = 'https://maven.fabricmc.net/'

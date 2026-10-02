@@ -11,10 +11,11 @@ import com.evandev.remi.util.SidebarPanelWithScrollOffset;
 import dev.emi.emi.screen.EmiScreenManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
@@ -87,8 +88,7 @@ public class CreativeModeTabManager {
     }
 
     private static void addFromRegistry(List<CreativeModeTab> list, ResourceKey<CreativeModeTab> key) {
-        CreativeModeTab tab = BuiltInRegistries.CREATIVE_MODE_TAB.get(key);
-        if (tab != null) list.add(tab);
+	    BuiltInRegistries.CREATIVE_MODE_TAB.get(key).ifPresent(tab -> list.add(tab.value()));
     }
 
     public static int getMaxScroll() {
@@ -102,13 +102,13 @@ public class CreativeModeTabManager {
     public static List<CreativeModeTab> loadDisabledTabs() {
         List<CreativeModeTab> result = new ArrayList<>();
         for (String s : ReliableEmiConfig.disabledCreativeModeTabs) {
-            CreativeModeTab tab = BuiltInRegistries.CREATIVE_MODE_TAB.get(ResourceLocation.parse(s));
-            if (tab == null && s.startsWith("emixx:")) {
-                tab = BuiltInRegistries.CREATIVE_MODE_TAB.get(ResourceLocation.parse("remi:" + s.substring(6)));
-            } else if (tab == null && s.startsWith("remi:")) {
-                tab = BuiltInRegistries.CREATIVE_MODE_TAB.get(ResourceLocation.parse("emixx:" + s.substring(5)));
+            Optional<Holder.Reference<CreativeModeTab>> tab = BuiltInRegistries.CREATIVE_MODE_TAB.get(Identifier.parse(s));
+            if (tab.isPresent() && s.startsWith("emixx:")) {
+                tab = BuiltInRegistries.CREATIVE_MODE_TAB.get(Identifier.parse("remi:" + s.substring(6)));
+            } else if (tab.isPresent() && s.startsWith("remi:")) {
+                tab = BuiltInRegistries.CREATIVE_MODE_TAB.get(Identifier.parse("emixx:" + s.substring(5)));
             }
-            if (tab != null) result.add(tab);
+	        tab.ifPresent(tabReference -> result.add(tabReference.value()));
         }
         return result;
     }
@@ -124,7 +124,8 @@ public class CreativeModeTabManager {
         if (creativeModeTabs.isEmpty()) {
             reload();
         }
-        indexCreativeModeTab = BuiltInRegistries.CREATIVE_MODE_TAB.get(CreativeModeTabs.SEARCH);
+	    BuiltInRegistries.CREATIVE_MODE_TAB.get(CreativeModeTabs.SEARCH)
+	                                       .ifPresent(tabReference -> indexCreativeModeTab = tabReference.value());
         scrollOffset = 0;
         List<ItemTab> page = updateTabs();
         if (page.isEmpty()) return;
@@ -139,7 +140,8 @@ public class CreativeModeTabManager {
 
     public static void reload() {
         if (indexCreativeModeTab == null) {
-            indexCreativeModeTab = BuiltInRegistries.CREATIVE_MODE_TAB.get(CreativeModeTabs.SEARCH);
+	        BuiltInRegistries.CREATIVE_MODE_TAB.get(CreativeModeTabs.SEARCH)
+	                                           .ifPresent(tabReference -> indexCreativeModeTab = tabReference.value());
         }
 
         disabledCreativeModeTabs.clear();
@@ -212,7 +214,7 @@ public class CreativeModeTabManager {
         }
 
         if (!isSelectingEmiPlusPlusByVanilla && ReliableEmiConfig.syncSelectedCreativeModeTab
-                && mc.screen instanceof CreativeModeInventoryScreen cms) {
+                && mc.gui.screen() instanceof CreativeModeInventoryScreen cms) {
             isSelectingVanillaByEmiPlusPlus = true;
             cms.selectTab(tab.creativeModeTab());
             cms.searchBox.setCanLoseFocus(true);
@@ -275,7 +277,7 @@ public class CreativeModeTabManager {
     public static void onCreativeModeInventoryScreenTabSelected(CreativeModeTab tab) {
         if (CreativeModeTabGui.tabCount == 0) return;
         Minecraft mc = Minecraft.getInstance();
-        if (!(mc.screen instanceof CreativeModeInventoryScreen cms)) return;
+        if (!(mc.gui.screen() instanceof CreativeModeInventoryScreen cms)) return;
         if (!ReliableEmiConfig.syncSelectedCreativeModeTab) return;
         if (isSelectingVanillaByEmiPlusPlus) return;
 

@@ -9,7 +9,7 @@ import net.neoforged.fml.loading.FMLEnvironment;
 @Mod(ReliableEmi.MOD_ID)
 public class ReliableEmiNeoForge {
     public ReliableEmiNeoForge(IEventBus eventBus, ModContainer container) {
-        if (FMLEnvironment.dist.isClient()) {
+        if (FMLEnvironment.getDist().isClient()) {
             ReliableEmiClientNeoForge.register(container);
         }
     }

@@ -258,8 +258,8 @@ public class ReliableEmiConfig {
         EmiConfig.loadConfig();
 
         var client = Minecraft.getInstance();
-        if (client.screen != null && !EmiScreenManager.isDisabled()) {
-            EmiScreenManager.addWidgets(client.screen);
+        if (client.gui != null && client.gui.screen() != null && !EmiScreenManager.isDisabled()) {
+            EmiScreenManager.addWidgets(client.gui.screen());
         }
         if (EmiSearch.bakedStacks != null) {
             EmiSearch.bake();

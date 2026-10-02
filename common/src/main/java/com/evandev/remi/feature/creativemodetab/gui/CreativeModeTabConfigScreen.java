@@ -5,20 +5,20 @@ import com.evandev.remi.feature.creativemodetab.CreativeModeTabManager;
 import com.evandev.remi.gui.GridList;
 import com.evandev.remi.gui.GridListConfigScreen;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
 public class CreativeModeTabConfigScreen extends GridListConfigScreen {
-    private final Set<ResourceLocation> disabledCreativeModeTabs;
+    private final Set<Identifier> disabledCreativeModeTabs;
 
     public CreativeModeTabConfigScreen(Screen parent) {
         super("creative_mode_tab_config", parent);
         this.disabledCreativeModeTabs = new HashSet<>();
         for (String s : ReliableEmiConfig.disabledCreativeModeTabs) {
-            disabledCreativeModeTabs.add(ResourceLocation.parse(s));
+            disabledCreativeModeTabs.add(Identifier.parse(s));
         }
     }
 
@@ -30,7 +30,7 @@ public class CreativeModeTabConfigScreen extends GridListConfigScreen {
     @Override
     protected void save() {
         ReliableEmiConfig.disabledCreativeModeTabs = new ArrayList<>();
-        for (ResourceLocation loc : disabledCreativeModeTabs) {
+        for (Identifier loc : disabledCreativeModeTabs) {
             ReliableEmiConfig.disabledCreativeModeTabs.add(loc.toString());
         }
         ReliableEmiConfig.save();

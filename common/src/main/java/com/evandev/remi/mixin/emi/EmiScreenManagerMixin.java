@@ -26,7 +26,13 @@ import dev.emi.emi.search.EmiSearch;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.commands.arguments.item.ItemInput;
+import net.minecraft.commands.arguments.item.ItemParser;
+import net.minecraft.core.component.DataComponentPatch;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
+import net.minecraft.server.permissions.Permissions;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import org.objectweb.asm.Opcodes;
@@ -42,6 +48,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.List;
+import java.util.Optional;
 
 @Mixin(value = EmiScreenManager.class, remap = false)
 public abstract class EmiScreenManagerMixin {
@@ -171,7 +178,7 @@ public abstract class EmiScreenManagerMixin {
         if (panel == null || panel.space == null) {
             return false;
         }
-        Screen screen = Minecraft.getInstance().screen;
+        Screen screen = Minecraft.getInstance().gui.screen();
         if (screen == null) {
             return false;
         }
@@ -278,11 +285,11 @@ public abstract class EmiScreenManagerMixin {
             at = @At(value = "INVOKE", target = "Ldev/emi/emi/registry/EmiDragDropHandlers;dropStack(Lnet/minecraft/client/gui/screens/Screen;Ldev/emi/emi/api/stack/EmiIngredient;II)Z"),
             method = "mouseReleased"
     )
-    private static boolean wrapDropStack(Screen screen, EmiIngredient stack, int x, int y, Operation<Boolean> original) {
+    private static boolean wrapDropStack(Screen screen, EmiIngredient stack, int x, int y, Operation<Boolean> original, MouseButtonEvent event) {
         boolean handled = original.call(screen, stack, x, y);
         if (!handled && ReliableEmiConfig.dragCheatToInventory && EmiApi.isCheatMode()) {
             if (screen instanceof AbstractContainerScreen<?> containerScreen) {
-                handled = remi$giveDraggedToInventory(containerScreen, stack, x, y);
+                handled = remi$giveDraggedToInventory(containerScreen, stack, x, y, event);
             }
         }
         return handled;
@@ -349,7 +356,10 @@ public abstract class EmiScreenManagerMixin {
     }
 
     @Unique
-    private static boolean remi$giveDraggedToInventory(AbstractContainerScreen<?> screen, EmiIngredient ingredient, int x, int y) {
+    private static boolean remi$giveDraggedToInventory(
+      AbstractContainerScreen<?> screen, EmiIngredient ingredient,
+      int x, int y, MouseButtonEvent event
+    ) {
         Minecraft client = Minecraft.getInstance();
         if (client.player == null) {
             return false;
@@ -357,7 +367,7 @@ public abstract class EmiScreenManagerMixin {
         if (!EmiApi.isCheatMode()) {
             return false;
         }
-        if (!client.player.hasPermissions(2) && !client.player.isCreative()) {
+        if (!client.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER) && !client.player.isCreative()) {
             return false;
         }
         if (ingredient == null || ingredient.isEmpty()) {
@@ -385,8 +395,8 @@ public abstract class EmiScreenManagerMixin {
 
         ItemStack toGive = itemStack.copy();
         ItemStack current = targetSlot.getItem();
-        int amount = Screen.hasShiftDown() ? toGive.getMaxStackSize() : 1;
-        if (!current.isEmpty() && ItemStack.isSameItemSameComponents(current, toGive) && !Screen.hasShiftDown()) {
+        int amount = event.hasShiftDown() ? toGive.getMaxStackSize() : 1;
+        if (!current.isEmpty() && ItemStack.isSameItemSameComponents(current, toGive) && !event.hasShiftDown()) {
             amount = Math.min(current.getCount() + 1, toGive.getMaxStackSize());
         }
         toGive.setCount(amount);
@@ -413,15 +423,28 @@ public abstract class EmiScreenManagerMixin {
                 return true;
             }
         } else {
-            String slotName = remi$getCommandSlotName(effectiveSlot.getContainerSlot());
-            if (slotName != null && client.level != null) {
-                ItemInput argument = new ItemInput(toGive.getItemHolder(), toGive.getComponentsPatch());
-                String command = "item replace entity @s " + slotName + " with " + argument.serialize(client.level.registryAccess()) + " " + amount;
-                if (command.length() < 256) {
-                    client.player.connection.sendUnsignedCommand(command);
-                    return true;
-                }
-            }
+	        String slotName = remi$getCommandSlotName(effectiveSlot.getContainerSlot());
+	        if (slotName != null && client.level != null) {
+		        // 1. Get the item ID string via typeHolder()
+		        String itemString = toGive.typeHolder().unwrapKey()
+		                                  .map(key -> key.identifier().toString())
+		                                  .orElse("");
+
+		        // 2. Encode component patch to SNBT string if components are modified
+		        DataComponentPatch patch = toGive.getComponentsPatch();
+		        if (!patch.isEmpty()) {
+			        var registryAccess = client.level.registryAccess();
+			        var ops = registryAccess.createSerializationContext(NbtOps.INSTANCE);
+
+			        itemString += DataComponentPatch.CODEC.encodeStart(ops, patch).result().flatMap(Tag::asString);
+		        }
+
+		        String command = "item replace entity @s " + slotName + " with " + itemString + " " + amount;
+		        if (command.length() < 256) {
+			        client.player.connection.sendCommand(command);
+			        return true;
+		        }
+	        }
         }
         return false;
     }
@@ -481,17 +504,18 @@ public abstract class EmiScreenManagerMixin {
     }
 
     @Inject(method = "mouseClicked", at = @At("TAIL"), cancellable = true)
-    private static void scrollbarMouseClicked(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
+    private static void scrollbarMouseClicked(MouseButtonEvent event, CallbackInfoReturnable<Boolean> cir) {
         for (EmiScreenManager.SidebarPanel panel : panels) {
             SidebarPanelWithScrollOffset scrollPanel = (SidebarPanelWithScrollOffset) panel;
-            if (scrollPanel.remi$getScrollbarWidget().mouseClicked(mouseX, mouseY, button)) {
+			// TODO: does doubleClick actually need to be passed properly?
+            if (scrollPanel.remi$getScrollbarWidget().mouseClicked(event, false)) {
                 cir.setReturnValue(true);
             }
         }
     }
 
     @Inject(method = "mouseReleased", at = @At("TAIL"))
-    private static void scrollbarMouseReleased(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
+    private static void scrollbarMouseReleased(MouseButtonEvent event, CallbackInfoReturnable<Boolean> cir) {
         for (EmiScreenManager.SidebarPanel panel : panels) {
             SidebarPanelWithScrollOffset scrollPanel = (SidebarPanelWithScrollOffset) panel;
             scrollPanel.remi$getScrollbarWidget().stopDragging();
@@ -499,10 +523,11 @@ public abstract class EmiScreenManagerMixin {
     }
 
     @Inject(method = "mouseDragged", at = @At("TAIL"), cancellable = true)
-    private static void scrollbarMouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY, CallbackInfoReturnable<Boolean> cir) {
+    private static void scrollbarMouseDragged(
+      MouseButtonEvent event, double deltaX, double deltaY, CallbackInfoReturnable<Boolean> cir) {
         for (EmiScreenManager.SidebarPanel panel : panels) {
             SidebarPanelWithScrollOffset scrollPanel = (SidebarPanelWithScrollOffset) panel;
-            if (scrollPanel.remi$getScrollbarWidget().mouseDragged(mouseX, mouseY, button, deltaX, deltaY)) {
+            if (scrollPanel.remi$getScrollbarWidget().mouseDragged(event, deltaX, deltaY)) {
                 cir.setReturnValue(true);
             }
         }

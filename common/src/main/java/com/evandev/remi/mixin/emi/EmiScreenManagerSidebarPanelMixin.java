@@ -199,7 +199,7 @@ public abstract class EmiScreenManagerSidebarPanelMixin implements SidebarPanelW
         if (!ReliableEmiConfig.isVerticalScrollbarEnabled()) {
             return;
         }
-        this.remi$scrollbar.render(context.raw(), mouseX, mouseY, delta);
+        this.remi$scrollbar.extractRenderState(context.raw(), mouseX, mouseY, delta);
     }
 
     @WrapOperation(method = "drawHeader", at = @At(value = "INVOKE", target = "Ldev/emi/emi/EmiRenderHelper;drawScroll(Ldev/emi/emi/runtime/EmiDrawContext;IIIIIII)V", remap = true))

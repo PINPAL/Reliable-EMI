@@ -14,8 +14,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(Screen.class)
 public abstract class ScreenMixin {
 
-    @Inject(method = "init(Lnet/minecraft/client/Minecraft;II)V", at = @At("RETURN"))
-    private void onInit(Minecraft minecraft, int width, int height, CallbackInfo ci) {
+    @Inject(method = "init()V", at = @At("RETURN"))
+    private void onInit(CallbackInfo ci) {
         if (ReliableEmiConfig.emiOnlyInRecipeBook) {
             EmiConfig.recipeBookAction = RecipeBookAction.DEFAULT;
             if (this instanceof RecipeUpdateListener) {

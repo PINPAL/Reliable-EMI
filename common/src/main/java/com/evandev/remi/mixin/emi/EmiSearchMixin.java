@@ -18,7 +18,7 @@ public class EmiSearchMixin {
     @WrapOperation(
             method = "bake",
             slice = @Slice(
-                    from = @At(value = "INVOKE", target = "Ldev/emi/emi/api/stack/EmiStack;getId()Lnet/minecraft/resources/ResourceLocation;"),
+                    from = @At(value = "INVOKE", target = "Ldev/emi/emi/api/stack/EmiStack;getId()Lnet/minecraft/resources/Identifier;"),
                     to = @At(value = "INVOKE", target = "Ldev/emi/emi/api/stack/EmiStack;getItemStack()Lnet/minecraft/world/item/ItemStack;")
             ),
             at = @At(

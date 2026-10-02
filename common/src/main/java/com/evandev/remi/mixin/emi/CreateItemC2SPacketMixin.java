@@ -1,6 +1,7 @@
 package com.evandev.remi.mixin.emi;
 
 import dev.emi.emi.network.CreateItemC2SPacket;
+import net.minecraft.server.permissions.Permissions;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Final;
@@ -23,7 +24,7 @@ public abstract class CreateItemC2SPacketMixin {
             ci.cancel();
             return;
         }
-        if (!player.hasPermissions(2) && !player.isCreative()) {
+        if (!player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER) && !player.isCreative()) {
             ci.cancel();
             return;
         }

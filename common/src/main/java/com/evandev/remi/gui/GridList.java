@@ -1,12 +1,13 @@
 package com.evandev.remi.gui;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
 import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,7 +21,8 @@ public abstract class GridList<Contents> extends ContainerObjectSelectionList<Gr
         super(Minecraft.getInstance(), screen.width, screen.height, 0, TripleEntry.HEIGHT);
         this.screen = screen;
         centerListVertically = false;
-        setRenderHeader(true, 16);
+		// FIXME: wtf does this shit do?
+//        setRenderHeader(true, 16);
     }
 
     @Override
@@ -29,7 +31,7 @@ public abstract class GridList<Contents> extends ContainerObjectSelectionList<Gr
     }
 
     @Override
-    public int getScrollbarPosition() {
+    public int maxScrollAmount() {
         return this.width - 6;
     }
 
@@ -69,13 +71,12 @@ public abstract class GridList<Contents> extends ContainerObjectSelectionList<Gr
         }
 
         @Override
-        public void render(@NotNull GuiGraphics guiGraphics, int index, int top, int left, int width, int height,
-                           int mouseX, int mouseY, boolean isHovered, float partialTick) {
+        public void extractContent(@NonNull GuiGraphicsExtractor guiGraphicsExtractor, int mouseX, int mouseY, boolean isHovered, float partialTick) {
             int xOffset = 0;
             int startX = (listWidget.screen.width - WIDTH) / 2;
             for (ListEntry entry : children) {
-                entry.setPosition(startX + xOffset, top);
-                entry.render(guiGraphics, mouseX, mouseY, partialTick);
+                entry.setPosition(startX + xOffset, listWidget.getY());
+                entry.extractWidgetRenderState(guiGraphicsExtractor, mouseX, mouseY, partialTick);
                 xOffset += ListEntry.WIDTH + GUTTER * 2;
             }
         }
@@ -89,5 +90,6 @@ public abstract class GridList<Contents> extends ContainerObjectSelectionList<Gr
         public @NotNull List<? extends NarratableEntry> narratables() {
             return children;
         }
+
     }
 }

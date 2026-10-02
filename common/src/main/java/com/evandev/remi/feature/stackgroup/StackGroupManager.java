@@ -18,7 +18,7 @@ import dev.emi.emi.config.SidebarType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.GsonHelper;
 
@@ -29,7 +29,7 @@ import java.util.function.BiFunction;
 
 @SuppressWarnings("UnstableApiUsage")
 public class StackGroupManager {
-    private static final Map<String, BiFunction<ResourceLocation, JsonObject, StackGroup>> typeRegistry = new HashMap<>();
+    private static final Map<String, BiFunction<Identifier, JsonObject, StackGroup>> typeRegistry = new HashMap<>();
     public static volatile List<StackGroup> stackGroups = List.of();
     private static volatile GroupIndex index = GroupIndex.EMPTY;
 
@@ -37,16 +37,16 @@ public class StackGroupManager {
         registerType("remi:group", (id, json) -> EmiStackGroup.parse(json, id));
         registerType("emixx:group", (id, json) -> EmiStackGroup.parse(json, id));
 
-        BiFunction<ResourceLocation, JsonObject, StackGroup> tagFactory = (id, json) -> {
+        BiFunction<Identifier, JsonObject, StackGroup> tagFactory = (id, json) -> {
             String tagName = GsonHelper.getAsString(json, "tag");
             String registryName = json.has("registry")
                     ? GsonHelper.getAsString(json, "registry")
-                    : EmiStackGroup.resolveTagRegistry(ResourceLocation.tryParse(tagName));
+                    : EmiStackGroup.resolveTagRegistry(Identifier.tryParse(tagName));
             registryName = EmiStackGroup.normalizeRegistry(registryName);
             @SuppressWarnings("rawtypes")
             TagKey tagKey = TagKey.create(
-                    ResourceKey.createRegistryKey(ResourceLocation.parse(registryName)),
-                    ResourceLocation.parse(tagName));
+                    ResourceKey.createRegistryKey(Identifier.parse(registryName)),
+                    Identifier.parse(tagName));
             String nameKey = json.has("name") ? GsonHelper.getAsString(json, "name") : null;
             Component customName = nameKey != null ? Component.translatable(nameKey) : null;
             EmiIngredient ingredient = new TagEmiIngredient(tagKey, 1);
@@ -69,16 +69,12 @@ public class StackGroupManager {
         registerType("emixx:infested_blocks", (id, json) -> new InfestedBlockItemGroup());
         registerType("remi:copper_blocks", (id, json) -> new CopperBlockItemGroup());
         registerType("emixx:copper_blocks", (id, json) -> new CopperBlockItemGroup());
-        registerType("remi:banner_patterns", (id, json) -> new BannerPatternItemGroup());
-        registerType("emixx:banner_patterns", (id, json) -> new BannerPatternItemGroup());
-        registerType("remi:animal_armors", (id, json) -> new AnimalArmorItemGroup());
-        registerType("emixx:animal_armors", (id, json) -> new AnimalArmorItemGroup());
 
         registerType("remi:regex", (id, json) -> EmiStackGroup.parse(json, id));
         registerType("emixx:regex", (id, json) -> EmiStackGroup.parse(json, id));
     }
 
-    public static Map<ResourceLocation, List<GroupedEmiStack<EmiStack>>> getItemToGroupedStacks() {
+    public static Map<Identifier, List<GroupedEmiStack<EmiStack>>> getItemToGroupedStacks() {
         return index.itemToGroupedStacks();
     }
 
@@ -90,22 +86,22 @@ public class StackGroupManager {
         return index.groupToGroupStacks().get(group);
     }
 
-    public static void registerType(String type, BiFunction<ResourceLocation, JsonObject, StackGroup> factory) {
+    public static void registerType(String type, BiFunction<Identifier, JsonObject, StackGroup> factory) {
         typeRegistry.put(type, factory);
     }
 
-    public static ResourceLocation getTagGroupId(TagKey<?> tagKey) {
-        String registry = tagKey.registry().location().toString();
+    public static Identifier getTagGroupId(TagKey<?> tagKey) {
+        String registry = tagKey.registry().identifier().toString();
         if (registry.equals("minecraft:item")) {
             return tagKey.location();
         }
         String prefix = registry.replace(':', '_') + "_";
-        return ResourceLocation.fromNamespaceAndPath(tagKey.location().getNamespace(), prefix + tagKey.location().getPath());
+        return Identifier.fromNamespaceAndPath(tagKey.location().getNamespace(), prefix + tagKey.location().getPath());
     }
 
     public static Path getGroupPath(TagKey<?> tagKey) {
-        ResourceLocation tag = tagKey.location();
-        String registry = tagKey.registry().location().toString();
+        Identifier tag = tagKey.location();
+        String registry = tagKey.registry().identifier().toString();
         String name = tag.getPath().replace('/', '_');
         String prefix = registry.equals("minecraft:item") ? "" : registry.replace(':', '_') + "_";
         String filename = tag.getNamespace() + "_" + prefix + name + ".json";
@@ -124,7 +120,7 @@ public class StackGroupManager {
         return dir;
     }
 
-    public static Path getGroupPath(ResourceLocation tag) {
+    public static Path getGroupPath(Identifier tag) {
         String name = tag.getPath().replace('/', '_');
         String filename = tag.getNamespace() + "_" + name + ".json";
         return resolveGroupPath(filename);
@@ -151,7 +147,7 @@ public class StackGroupManager {
             if (g.getId().equals(getTagGroupId(tagKey))) {
                 return g;
             }
-            if (tagKey.registry().location().toString().equals("minecraft:item") && g.getId().equals(tagKey.location())) {
+            if (tagKey.registry().identifier().toString().equals("minecraft:item") && g.getId().equals(tagKey.location())) {
                 return g;
             }
         }
@@ -162,7 +158,7 @@ public class StackGroupManager {
         return getGroup(tagKey) != null;
     }
 
-    public static boolean hasGroup(ResourceLocation tag) {
+    public static boolean hasGroup(Identifier tag) {
         for (StackGroup g : stackGroups) if (g.getId().equals(tag)) return true;
         return false;
     }
@@ -172,7 +168,7 @@ public class StackGroupManager {
         return g != null && g.isEnabled;
     }
 
-    public static boolean isGroupEnabled(ResourceLocation tag) {
+    public static boolean isGroupEnabled(Identifier tag) {
         for (StackGroup g : stackGroups) {
             if (g.getId().equals(tag)) {
                 return g.isEnabled;
@@ -183,7 +179,7 @@ public class StackGroupManager {
 
     public static void toggleTagGroup(TagKey<?> tagKey) {
         StackGroup group = getGroup(tagKey);
-        ResourceLocation groupId = group != null ? group.getId() : getTagGroupId(tagKey);
+        Identifier groupId = group != null ? group.getId() : getTagGroupId(tagKey);
         boolean currentlyEnabled = isGroupEnabled(tagKey);
         String idStr = groupId.toString();
         String altStr = idStr.startsWith("remi:") ? "emixx:" + idStr.substring(5)
@@ -212,7 +208,7 @@ public class StackGroupManager {
         reload();
     }
 
-    public static void toggleTagGroup(ResourceLocation tag) {
+    public static void toggleTagGroup(Identifier tag) {
         boolean currentlyEnabled = isGroupEnabled(tag);
         String idStr = tag.toString();
         String altStr = idStr.startsWith("remi:") ? "emixx:" + idStr.substring(5)
@@ -245,7 +241,7 @@ public class StackGroupManager {
             json.addProperty("type", "remi:tag");
             json.addProperty("id", getTagGroupId(tagKey).toString());
             json.addProperty("tag", tagKey.location().toString());
-            json.addProperty("registry", tagKey.registry().location().toString());
+            json.addProperty("registry", tagKey.registry().identifier().toString());
             json.addProperty("enabled", enabled);
             try (var writer = Files.newBufferedWriter(file)) {
                 new GsonBuilder().setPrettyPrinting().create().toJson(json, writer);
@@ -255,7 +251,7 @@ public class StackGroupManager {
         }
     }
 
-    public static void saveGroupConfig(ResourceLocation tag, boolean enabled) {
+    public static void saveGroupConfig(Identifier tag, boolean enabled) {
         Path file = getGroupPath(tag);
         try {
             Files.createDirectories(file.getParent());
@@ -277,7 +273,7 @@ public class StackGroupManager {
         String lower = query.toLowerCase(Locale.ROOT);
         Set<EmiStack> existing = new HashSet<>(results);
 
-        Set<ResourceLocation> allowedIds = null;
+        Set<Identifier> allowedIds = null;
         List<EmiStack> tabSource = StackManager.sourceStacks;
         if (tabSource != null && tabSource != StackManager.indexStacks) {
             allowedIds = new HashSet<>(tabSource.size());
@@ -316,7 +312,7 @@ public class StackGroupManager {
             return;
         }
 
-        Map<ResourceLocation, StackGroup> loaded = new LinkedHashMap<>();
+        Map<Identifier, StackGroup> loaded = new LinkedHashMap<>();
 
         var resourceManager = Minecraft.getInstance().getResourceManager();
         try {
@@ -327,7 +323,7 @@ public class StackGroupManager {
                 String namespace = location.getNamespace();
                 String path = location.getPath().substring("stack_groups/".length());
                 path = path.substring(0, path.length() - ".json".length());
-                ResourceLocation id = ResourceLocation.fromNamespaceAndPath(namespace, path);
+                Identifier id = Identifier.fromNamespaceAndPath(namespace, path);
                 try (var reader = resource.openAsReader()) {
                     loadGroup(id, JsonParser.parseReader(reader).getAsJsonObject(), loaded);
                 }
@@ -346,7 +342,7 @@ public class StackGroupManager {
             configDirs.add(emixxDir);
         }
 
-        Set<ResourceLocation> userLoadedIds = new HashSet<>();
+        Set<Identifier> userLoadedIds = new HashSet<>();
         for (Path dir : configDirs) {
             try (var stream = Files.walk(dir)) {
                 stream.filter(p -> Files.isRegularFile(p) && p.toString().endsWith(".json")).forEach(path -> {
@@ -359,19 +355,19 @@ public class StackGroupManager {
                             String tag = json.get("tag").getAsString();
                             String registry = json.has("registry")
                                     ? json.get("registry").getAsString()
-                                    : EmiStackGroup.resolveTagRegistry(ResourceLocation.tryParse(tag));
+                                    : EmiStackGroup.resolveTagRegistry(Identifier.tryParse(tag));
                             registry = EmiStackGroup.normalizeRegistry(registry);
                             if (registry.equals("minecraft:item")) {
                                 idString = tag;
                             } else {
-                                ResourceLocation tagLoc = ResourceLocation.parse(tag);
-                                idString = ResourceLocation.fromNamespaceAndPath(tagLoc.getNamespace(), registry.replace(':', '_') + "_" + tagLoc.getPath()).toString();
+                                Identifier tagLoc = Identifier.parse(tag);
+                                idString = Identifier.fromNamespaceAndPath(tagLoc.getNamespace(), registry.replace(':', '_') + "_" + tagLoc.getPath()).toString();
                             }
                         } else {
                             idString = null;
                         }
                         if (idString != null) {
-                            ResourceLocation resId = ResourceLocation.parse(idString);
+                            Identifier resId = Identifier.parse(idString);
                             if (userLoadedIds.add(resId)) {
                                 loadGroup(resId, json, loaded);
                             }
@@ -391,11 +387,11 @@ public class StackGroupManager {
         stackGroups = List.copyOf(sorted);
     }
 
-    private static void loadGroup(ResourceLocation id, JsonObject json, Map<ResourceLocation, StackGroup> loaded) {
+    private static void loadGroup(Identifier id, JsonObject json, Map<Identifier, StackGroup> loaded) {
         try {
             boolean jsonEnabled = GsonHelper.getAsBoolean(json, "enabled", true);
             String type = GsonHelper.getAsString(json, "type", "remi:group");
-            BiFunction<ResourceLocation, JsonObject, StackGroup> factory = typeRegistry.get(type);
+            BiFunction<Identifier, JsonObject, StackGroup> factory = typeRegistry.get(type);
             if (factory == null && type.startsWith("emixx:")) {
                 factory = typeRegistry.get("remi:" + type.substring(6));
             }
@@ -583,18 +579,18 @@ public class StackGroupManager {
 
     public static void buildGroupedEmiStacksAndStackGroupToContents(List<EmiStack> source) {
         List<StackGroup> groups = stackGroups;
-        Map<ResourceLocation, List<GroupedEmiStack<EmiStack>>> localItemMap = new HashMap<>();
+        Map<Identifier, List<GroupedEmiStack<EmiStack>>> localItemMap = new HashMap<>();
         Map<EmiStack, List<GroupedEmiStack<EmiStack>>> localStackMap = new IdentityHashMap<>();
         Map<StackGroup, EmiGroupStack> localGroupMap = new IdentityHashMap<>();
         for (StackGroup g : groups) localGroupMap.put(g, new EmiGroupStack(g, new ArrayList<>()));
 
         for (EmiStack stack : source) {
-            ResourceLocation stackId = stack.getId();
+            Identifier stackId = stack.getId();
 
             for (StackGroup group : groups) {
                 if (!group.isEnabled) continue;
 
-                Set<ResourceLocation> optimizedIds = group.getOptimizedIds();
+                Set<Identifier> optimizedIds = group.getOptimizedIds();
                 if (optimizedIds != null && !optimizedIds.isEmpty()) {
                     if (!optimizedIds.contains(stackId)) continue;
                 }
@@ -641,7 +637,7 @@ public class StackGroupManager {
     }
 
     private static void registerMatch(StackGroup group, EmiStack stack, Map<StackGroup, EmiGroupStack> groupStacksMap,
-                                      Map<ResourceLocation, List<GroupedEmiStack<EmiStack>>> itemMap,
+                                      Map<Identifier, List<GroupedEmiStack<EmiStack>>> itemMap,
                                       Map<EmiStack, List<GroupedEmiStack<EmiStack>>> stackMap) {
         EmiGroupStack groupStack = groupStacksMap.get(group);
         if (groupStack == null) return;
@@ -654,7 +650,7 @@ public class StackGroupManager {
     }
 
     private record GroupIndex(
-            Map<ResourceLocation, List<GroupedEmiStack<EmiStack>>> itemToGroupedStacks,
+            Map<Identifier, List<GroupedEmiStack<EmiStack>>> itemToGroupedStacks,
             Map<EmiStack, List<GroupedEmiStack<EmiStack>>> stackToGroupedStacks,
             Map<StackGroup, EmiGroupStack> groupToGroupStacks,
             Map<StackGroup, String> groupLowerIds,

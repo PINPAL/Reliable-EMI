@@ -9,10 +9,12 @@ import dev.emi.emi.config.SidebarTheme;
 import dev.emi.emi.runtime.EmiDrawContext;
 import dev.emi.emi.screen.EmiScreenManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.TabButton;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.CreativeModeTab;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,7 +62,7 @@ public class ItemTabButton extends TabButton {
     private final ButtonStyle style;
     private final Component title;
     private final TabPosition position;
-    private ResourceLocation customIcon;
+    private Identifier customIcon;
     private Component lastDisplayTitle;
 
     public ItemTabButton(ItemTabManager tabManager, ItemTab tab, int width, int height,
@@ -75,7 +77,7 @@ public class ItemTabButton extends TabButton {
         this.visible = tab.creativeModeTab() != null;
     }
 
-    private static ResourceLocation fetchRecreativeIcon(CreativeModeTab tab) {
+    private static Identifier fetchRecreativeIcon(CreativeModeTab tab) {
         if (tab == null) return null;
         if (!checkedRecreativeMethod) {
             try {
@@ -86,7 +88,7 @@ public class ItemTabButton extends TabButton {
         }
         if (recreativeIconMethod != null) {
             try {
-                return (ResourceLocation) recreativeIconMethod.invoke(tab);
+                return (Identifier) recreativeIconMethod.invoke(tab);
             } catch (Exception e) {
                 return null;
             }
@@ -94,7 +96,7 @@ public class ItemTabButton extends TabButton {
         return null;
     }
 
-    private ResourceLocation getCustomIcon() {
+    private Identifier getCustomIcon() {
         if (this.customIcon == null && this.tab.creativeModeTab() != null) {
             this.customIcon = fetchRecreativeIcon(this.tab.creativeModeTab());
         }
@@ -106,30 +108,30 @@ public class ItemTabButton extends TabButton {
     }
 
     @Override
-    public void onClick(double mouseX, double mouseY) {
+    public void onClick(final MouseButtonEvent event, final boolean doubleClickY) {
         if (!isVisible()) return;
-        super.onClick(mouseX, mouseY);
+        super.onClick(event, doubleClickY);
         tabManager.onTabSelected(tab);
     }
 
     @Override
-    public void renderWidget(@NotNull GuiGraphics raw, int mouseX, int mouseY, float partialTick) {
+    public void extractWidgetRenderState(@NotNull GuiGraphicsExtractor raw, int mouseX, int mouseY, float partialTick) {
         if (!isVisible()) return;
 
-        RenderSystem.enableBlend();
-        RenderSystem.enableDepthTest();
+//        RenderSystem.enableBlend();
+//        RenderSystem.enableDepthTest();
         EmiDrawContext context = EmiDrawContext.wrap(raw);
         EmiScreenManager.SidebarPanel panel = ScreenManager.getTargetCreativeTabPanel();
         boolean isVanillaTheme = panel != null && panel.theme == SidebarTheme.VANILLA;
 
-        ResourceLocation icon = getCustomIcon();
+        Identifier icon = getCustomIcon();
 
         int iconSize = ReliableEmiConfig.tabIconSize;
         int iconX = getX() + (getWidth() - iconSize) / 2;
         int iconY = getY() + (getHeight() - iconSize) / 2;
 
-        raw.pose().pushPose();
-        raw.pose().translate(0.0, 0.0, isSelected() ? 100.0 : 0.0);
+        raw.pose().pushMatrix();
+        raw.pose().translate(0.0f, 0.0f);
 
         TabSprites sprites = isVanillaTheme ? HORIZONTAL_VANILLA_SPRITES : HORIZONTAL_SPRITES;
 
@@ -140,15 +142,15 @@ public class ItemTabButton extends TabButton {
             sprites = isVanillaTheme ? VERTICAL_VANILLA_SPRITES : VERTICAL_SPRITES;
         }
 
-        raw.blitSprite(sprites.get(isSelected(), position), getX(), getY(), getWidth(), getHeight());
-        raw.pose().popPose();
+        raw.blitSprite(RenderPipelines.GUI_TEXTURED, sprites.get(isSelected(), position), getX(), getY(), getWidth(), getHeight());
+        raw.pose().popMatrix();
 
         if (icon != null) {
-            raw.pose().pushPose();
-            raw.pose().translate(iconX, iconY, 150.0);
-            raw.pose().scale(iconSize / 16f, iconSize / 16f, 1f);
-            raw.blit(icon, 0, 0, 0f, 0f, 16, 16, 16, 16);
-            raw.pose().popPose();
+            raw.pose().pushMatrix();
+            raw.pose().translate(iconX, iconY);
+            raw.pose().scale(iconSize / 16f, iconSize / 16f);
+            raw.blit(icon, 0, 0, 0, 0, 16, 16, 16, 16);
+            raw.pose().popMatrix();
         } else if (tab.creativeModeTab() != null) {
             GuiGraphicsUtils.renderItem(raw, tab.creativeModeTab().getIconItem(), iconX, iconY, iconSize);
         }
@@ -159,24 +161,22 @@ public class ItemTabButton extends TabButton {
                 lastDisplayTitle = ScreenManager.customIndexTitle;
             }
 
-            if (Minecraft.getInstance().screen != null) {
-                Minecraft.getInstance().screen.setTooltipForNextRenderPass(title);
-            }
+	        raw.setTooltipForNextFrame(title, mouseX, mouseY);
         } else if (!ReliableEmiConfig.showTitleInsteadOfPageNumbers) {
             ScreenManager.removeCustomIndexTitle(lastDisplayTitle != null ? lastDisplayTitle : title);
         }
 
-        RenderSystem.disableBlend();
+//        RenderSystem.disableBlend();
     }
 
     public enum ButtonStyle {TOP, LEFT, RIGHT}
 
     public enum TabPosition {FIRST, MIDDLE, LAST}
 
-    public record TabSprites(ResourceLocation middle, ResourceLocation first, ResourceLocation last,
-                             ResourceLocation middleSelected, ResourceLocation firstSelected,
-                             ResourceLocation lastSelected) {
-        public ResourceLocation get(boolean selected, TabPosition position) {
+    public record TabSprites(Identifier middle, Identifier first, Identifier last,
+                             Identifier middleSelected, Identifier firstSelected,
+                             Identifier lastSelected) {
+        public Identifier get(boolean selected, TabPosition position) {
             if (selected) {
                 return switch (position) {
                     case FIRST -> firstSelected;

@@ -2,26 +2,26 @@ package com.evandev.remi.feature.stackgroup.data;
 
 import dev.emi.emi.api.stack.EmiIngredient;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.Set;
 
 public abstract class StackGroup {
-    private final ResourceLocation id;
+    private final Identifier id;
     public final Component name;
     public boolean isEnabled = true;
     public int priority = 0;
 
-    protected StackGroup(ResourceLocation id, Component name) {
+    protected StackGroup(Identifier id, Component name) {
         this.id = id;
         this.name = name;
     }
 
-    public ResourceLocation getId() { return id; }
+    public Identifier getId() { return id; }
 
     public abstract boolean match(EmiIngredient stack);
 
-    public Set<ResourceLocation> getOptimizedIds() {
+    public Set<Identifier> getOptimizedIds() {
         return null;
     }
 }

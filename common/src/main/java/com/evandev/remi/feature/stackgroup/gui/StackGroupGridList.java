@@ -9,20 +9,22 @@ import com.evandev.remi.gui.ListEntry;
 import com.evandev.remi.gui.components.Switch;
 import com.evandev.remi.integration.emi.ScreenManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import java.util.*;
 
 public class StackGroupGridList extends GridList<StackGroup> {
-    private final Set<ResourceLocation> disabledStackGroups;
+    private final Set<Identifier> disabledStackGroups;
     private String searchQuery = "";
 
-    public StackGroupGridList(StackGroupConfigScreen screen, Set<ResourceLocation> disabledStackGroups) {
+    public StackGroupGridList(StackGroupConfigScreen screen, Set<Identifier> disabledStackGroups) {
         super(screen);
         this.disabledStackGroups = disabledStackGroups;
     }
@@ -54,22 +56,22 @@ public class StackGroupGridList extends GridList<StackGroup> {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
         if (StackGroupEntry.activeExpandedEntry != null) {
-            if (StackGroupEntry.activeExpandedEntry.handleDropdownClick(mouseX, mouseY)) {
+            if (StackGroupEntry.activeExpandedEntry.handleDropdownClick(event.x(), event.y())) {
                 return true;
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, doubleClick);
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+    public boolean mouseReleased(@NonNull MouseButtonEvent event) {
         if (StackGroupEntry.activeExpandedEntry != null && StackGroupEntry.activeExpandedEntry.draggedIndex != -1) {
-            StackGroupEntry.activeExpandedEntry.handleDropdownRelease(mouseX, mouseY, button);
+            StackGroupEntry.activeExpandedEntry.handleDropdownRelease(event.x(), event.y(), event.button());
             return true;
         }
-        return super.mouseReleased(mouseX, mouseY, button);
+        return super.mouseReleased(event);
     }
 
     public static class StackGroupEntry extends ListEntry {
@@ -81,7 +83,7 @@ public class StackGroupGridList extends GridList<StackGroup> {
         public int draggedIndex = -1;
         public boolean isExpanded = false;
 
-        public StackGroupEntry(StackGroup group, TripleEntry<StackGroup> triple, Set<ResourceLocation> disabledGroups) {
+        public StackGroupEntry(StackGroup group, TripleEntry<StackGroup> triple, Set<Identifier> disabledGroups) {
             super(triple);
             this.group = group;
             boolean checked = group != null && !disabledGroups.contains(group.getId());
@@ -100,9 +102,9 @@ public class StackGroupGridList extends GridList<StackGroup> {
         }
 
         @Override
-        public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            if (super.mouseClicked(mouseX, mouseY, button)) return true;
-            if (button != 0 || group == null) return false;
+        public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
+            if (super.mouseClicked(event, doubleClick)) return true;
+            if (event.button() != 0 || group == null) return false;
 
             EmiGroupStack cachedStack = StackGroupManager.getGroupStack(group);
             if (cachedStack == null || cachedStack.itemsNew == null) return false;
@@ -113,8 +115,8 @@ public class StackGroupGridList extends GridList<StackGroup> {
                 int titleX = getX() + BORDER_WIDTH + PADDING;
                 int titleY = getY() + BORDER_WIDTH + PADDING + 2;
 
-                if (mouseX >= titleX && mouseX <= titleX + font.width(getEntryTitle()) &&
-                        mouseY >= titleY && mouseY <= titleY + font.lineHeight) {
+                if (event.x() >= titleX && event.x() <= titleX + font.width(getEntryTitle()) &&
+                        event.y() >= titleY && event.y() <= titleY + font.lineHeight) {
 
                     isExpanded = !isExpanded;
                     if (isExpanded) {
@@ -134,8 +136,8 @@ public class StackGroupGridList extends GridList<StackGroup> {
                 int itemY = getY() + BORDER_WIDTH + PADDING + ScreenManager.ENTRY_SIZE;
                 for (int i = 0; i < Math.min(8, cachedStack.itemsNew.size()); i++) {
                     int itemX = startX + i * ScreenManager.ENTRY_SIZE;
-                    if (mouseX >= itemX && mouseX < itemX + ScreenManager.ENTRY_SIZE &&
-                            mouseY >= itemY && mouseY < itemY + ScreenManager.ENTRY_SIZE) {
+                    if (event.x() >= itemX && event.x() < itemX + ScreenManager.ENTRY_SIZE &&
+                            event.y() >= itemY && event.y() < itemY + ScreenManager.ENTRY_SIZE) {
                         draggedIndex = i;
                         return true;
                     }
@@ -171,8 +173,8 @@ public class StackGroupGridList extends GridList<StackGroup> {
         }
 
         @Override
-        public boolean mouseReleased(double mouseX, double mouseY, int button) {
-            if (draggedIndex == -1 || button != 0) return super.mouseReleased(mouseX, mouseY, button);
+        public boolean mouseReleased(@NonNull MouseButtonEvent event) {
+            if (draggedIndex == -1 || event.button() != 0) return super.mouseReleased(event);
 
             if (!isExpanded) {
                 EmiGroupStack cachedStack = StackGroupManager.getGroupStack(group);
@@ -180,8 +182,8 @@ public class StackGroupGridList extends GridList<StackGroup> {
                     int startX = getX() + BORDER_WIDTH + PADDING;
                     int itemY = getY() + BORDER_WIDTH + PADDING + ScreenManager.ENTRY_SIZE;
 
-                    if (mouseY >= itemY - 10 && mouseY <= itemY + ScreenManager.ENTRY_SIZE + 10) {
-                        int col = (int) Math.floor((mouseX - startX) / (double) ScreenManager.ENTRY_SIZE);
+                    if (event.y() >= itemY - 10 && event.y() <= itemY + ScreenManager.ENTRY_SIZE + 10) {
+                        int col = (int) Math.floor((event.x() - startX) / (double) ScreenManager.ENTRY_SIZE);
                         int dropIndex = Math.max(0, Math.min(col, Math.min(8, cachedStack.itemsNew.size()) - 1));
 
                         processItemReorder(cachedStack, dropIndex);
@@ -235,7 +237,7 @@ public class StackGroupGridList extends GridList<StackGroup> {
         }
 
         @Override
-        public void renderEntry(GuiGraphics guiGraphics, int mouseX, int mouseY, int startX, int startY, float partialTick) {
+        public void renderEntry(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, int startX, int startY, float partialTick) {
             if (group == null) return;
 
             EmiGroupStack cachedStack = StackGroupManager.getGroupStack(group);
@@ -267,10 +269,10 @@ public class StackGroupGridList extends GridList<StackGroup> {
                 displayList.add(currentDropIndex, item);
             }
 
-            guiGraphics.pose().pushPose();
+            guiGraphics.pose().pushMatrix();
 
             if (isExpanded) {
-                guiGraphics.pose().translate(0, 0, 300);
+                guiGraphics.pose().translate(0, 0);
                 int dropDownHeight = rows * ScreenManager.ENTRY_SIZE;
 
                 guiGraphics.fill(startX - 2, itemY - 2, startX + 8 * ScreenManager.ENTRY_SIZE + 2, itemY + dropDownHeight + 2, 0xFF1A1A1A);
@@ -293,27 +295,27 @@ public class StackGroupGridList extends GridList<StackGroup> {
                         mouseX >= itemX && mouseX < itemX + ScreenManager.ENTRY_SIZE &&
                         mouseY >= currentItemY && mouseY < currentItemY + ScreenManager.ENTRY_SIZE;
 
-                guiGraphics.pose().pushPose();
+                guiGraphics.pose().pushMatrix();
 
                 if (hovered) {
-                    guiGraphics.pose().translate(itemX + 8, currentItemY + 8, 100);
-                    guiGraphics.pose().scale(1.2F, 1.2F, 1.2F);
-                    guiGraphics.pose().translate(-(itemX + 8), -(currentItemY + 8), -100);
+                    guiGraphics.pose().translate(itemX + 8, currentItemY + 8);
+                    guiGraphics.pose().scale(1.2F, 1.2F);
+                    guiGraphics.pose().translate(-(itemX + 8), -(currentItemY + 8));
                 }
 
-                guiGraphics.renderItem(item.getItemStack(), itemX, currentItemY);
-                guiGraphics.renderItemDecorations(font, item.getItemStack(), itemX, currentItemY, "");
-                guiGraphics.pose().popPose();
+                guiGraphics.item(item.getItemStack(), itemX, currentItemY);
+                guiGraphics.itemDecorations(font, item.getItemStack(), itemX, currentItemY, "");
+                guiGraphics.pose().popMatrix();
             }
-            guiGraphics.pose().popPose();
+            guiGraphics.pose().popMatrix();
 
             if (draggedIndex != -1 && draggedIndex < cachedStack.itemsNew.size()) {
                 var draggedItem = cachedStack.itemsNew.get(draggedIndex);
-                guiGraphics.pose().pushPose();
-                guiGraphics.pose().translate(0, 0, 400);
-                guiGraphics.renderItem(draggedItem.getItemStack(), mouseX - 8, mouseY - 8);
-                guiGraphics.renderItemDecorations(font, draggedItem.getItemStack(), mouseX - 8, mouseY - 8, "");
-                guiGraphics.pose().popPose();
+                guiGraphics.pose().pushMatrix();
+                guiGraphics.pose().translate(0, 0);
+                guiGraphics.item(draggedItem.getItemStack(), mouseX - 8, mouseY - 8);
+                guiGraphics.itemDecorations(font, draggedItem.getItemStack(), mouseX - 8, mouseY - 8, "");
+                guiGraphics.pose().popMatrix();
             }
         }
 
@@ -333,7 +335,7 @@ public class StackGroupGridList extends GridList<StackGroup> {
         }
 
         @Override
-        public void renderWidget(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        public void extractWidgetRenderState(@NotNull GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
             var font = Minecraft.getInstance().font;
             int titleX = getX() + BORDER_WIDTH + PADDING;
             int titleY = getY() + BORDER_WIDTH + PADDING + 2;
@@ -341,7 +343,7 @@ public class StackGroupGridList extends GridList<StackGroup> {
             this.isTitleHovered = mouseX >= titleX && mouseX <= titleX + font.width(getEntryTitle()) &&
                     mouseY >= titleY && mouseY <= titleY + font.lineHeight;
 
-            super.renderWidget(guiGraphics, mouseX, mouseY, partialTick);
+            super.extractWidgetRenderState(guiGraphics, mouseX, mouseY, partialTick);
         }
 
         @Override
@@ -366,5 +368,10 @@ public class StackGroupGridList extends GridList<StackGroup> {
 
             return baseName;
         }
+
+	    @Override
+	    protected int contentHeight() {
+			return childWidgets.stream().mapToInt(AbstractWidget::getHeight).sum();
+	    }
     }
 }

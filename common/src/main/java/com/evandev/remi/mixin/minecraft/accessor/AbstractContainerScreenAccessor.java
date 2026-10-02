@@ -11,6 +11,6 @@ public interface AbstractContainerScreenAccessor {
     @Accessor("hoveredSlot")
     Slot remi$getHoveredSlot();
 
-    @Invoker("findSlot")
+    @Invoker("getHoveredSlot")
     Slot remi$findSlot(double mouseX, double mouseY);
 }

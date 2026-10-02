@@ -2,6 +2,7 @@ package com.evandev.remi.feature.creativemodetab.gui.itemtab;
 
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.tabs.Tab;
+import net.minecraft.client.gui.layouts.Layout;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
@@ -16,11 +17,21 @@ public record ItemTab(CreativeModeTab creativeModeTab) implements Tab {
         return creativeModeTab != null ? creativeModeTab.getDisplayName() : Component.empty();
     }
 
-    @Override
+	@Override
+	public Component getTabExtraNarration() {
+		return null;
+	}
+
+	@Override
     public void visitChildren(@NotNull Consumer<AbstractWidget> consumer) {
     }
 
     @Override
     public void doLayout(@NotNull ScreenRectangle rectangle) {
     }
+
+	@Override
+	public Layout getLayout() {
+		return null;
+	}
 }

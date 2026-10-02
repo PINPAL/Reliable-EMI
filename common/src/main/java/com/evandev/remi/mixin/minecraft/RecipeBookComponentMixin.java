@@ -17,10 +17,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class RecipeBookComponentMixin {
 
     @Shadow
-    protected boolean visible;
+    private boolean visible;
 
     @Inject(method = "init", at = @At("RETURN"))
-    private void onInit(int width, int height, Minecraft minecraft, boolean widthTooNarrow, RecipeBookMenu<?, ?> menu, CallbackInfo ci) {
+    private void onInit(int width, int height, Minecraft minecraft, boolean widthTooNarrow, CallbackInfo ci) {
         if (ReliableEmiConfig.emiOnlyInRecipeBook) {
             this.visible = false;
             EmiConfig.recipeBookAction = RecipeBookAction.DEFAULT;

@@ -12,7 +12,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.entity.EntityType;
@@ -28,23 +28,23 @@ import java.util.regex.Pattern;
 
 public class EmiStackGroup extends StackGroup {
     private final TagKey<?> tagKey;
-    private final Map<ResourceLocation, List<EmiIngredient>> targetMap;
-    private final Set<ResourceLocation> allTargetIds;
-    private final Set<ResourceLocation> excludedIds;
+    private final Map<Identifier, List<EmiIngredient>> targetMap;
+    private final Set<Identifier> allTargetIds;
+    private final Set<Identifier> excludedIds;
     private final List<Pattern> regexes;
 
-    public EmiStackGroup(ResourceLocation id, @Nullable TagKey<?> tagKey, Set<EmiIngredient> targets, Set<ResourceLocation> excludedIds, List<Pattern> regexes, Component name) {
+    public EmiStackGroup(Identifier id, @Nullable TagKey<?> tagKey, Set<EmiIngredient> targets, Set<Identifier> excludedIds, List<Pattern> regexes, Component name) {
         super(id, name);
         this.tagKey = tagKey;
         this.excludedIds = excludedIds;
         this.regexes = regexes != null ? regexes : List.of();
 
-        Map<ResourceLocation, List<EmiIngredient>> tempMap = new HashMap<>();
-        Set<ResourceLocation> tempIds = new HashSet<>();
+        Map<Identifier, List<EmiIngredient>> tempMap = new HashMap<>();
+        Set<Identifier> tempIds = new HashSet<>();
         for (EmiIngredient ingredient : targets) {
             for (EmiStack stack : getIngredientStacks(ingredient)) {
                 if (stack == null || stack.isEmpty()) continue;
-                ResourceLocation stackId = stack.getId();
+                Identifier stackId = stack.getId();
                 if (stackId == null) continue;
                 tempMap.computeIfAbsent(stackId, k -> new ArrayList<>()).add(ingredient);
                 tempIds.add(stackId);
@@ -54,7 +54,7 @@ public class EmiStackGroup extends StackGroup {
         this.allTargetIds = tempIds;
     }
 
-    public EmiStackGroup(ResourceLocation id, Set<EmiIngredient> targets, Set<ResourceLocation> excludedIds, List<Pattern> regexes, Component name) {
+    public EmiStackGroup(Identifier id, Set<EmiIngredient> targets, Set<Identifier> excludedIds, List<Pattern> regexes, Component name) {
         this(id, null, targets, excludedIds, regexes, name);
     }
 
@@ -69,37 +69,36 @@ public class EmiStackGroup extends StackGroup {
                     if (rawKey.registry().equals(BuiltInRegistries.BLOCK.key())) {
                         @SuppressWarnings("unchecked")
                         TagKey<Block> blockTagKey = (TagKey<Block>) rawKey;
-                        var tagHolderList = BuiltInRegistries.BLOCK.getTag(blockTagKey);
-                        if (tagHolderList.isPresent()) {
-                            for (var holder : tagHolderList.get()) {
-                                rawStacks.add(EmiStack.of(holder.value()));
-                            }
-                        }
+
+	                    BuiltInRegistries.BLOCK.get(blockTagKey).ifPresent(tagHolderList -> {
+		                    for (Holder<Block> holder : tagHolderList) {
+			                    rawStacks.add(EmiStack.of(holder.value()));
+		                    }
+	                    });
                     } else if (rawKey.registry().equals(BuiltInRegistries.ENTITY_TYPE.key())) {
                         @SuppressWarnings("unchecked")
                         TagKey<EntityType<?>> entityTagKey = (TagKey<EntityType<?>>) rawKey;
-                        var tagHolderList = BuiltInRegistries.ENTITY_TYPE.getTag(entityTagKey);
-                        if (tagHolderList.isPresent()) {
-                            for (var holder : tagHolderList.get()) {
-                                SpawnEggItem egg = SpawnEggItem.byId(holder.value());
-                                if (egg != null) {
-                                    rawStacks.add(EmiStack.of(egg));
-                                }
-                            }
-                        }
+
+	                    BuiltInRegistries.ENTITY_TYPE.get(entityTagKey).ifPresent(tagHolderList -> {
+		                    for (Holder<EntityType<?>> holder : tagHolderList) {
+			                    SpawnEggItem.byId(holder.value()).ifPresent(eggHolder -> {
+									rawStacks.add(EmiStack.of(eggHolder.value()));
+			                    });
+		                    }
+	                    });
                     } else if (rawKey.registry().equals(BuiltInRegistries.FLUID.key())) {
                         @SuppressWarnings("unchecked")
                         TagKey<Fluid> fluidTagKey = (TagKey<Fluid>) rawKey;
-                        var tagHolderList = BuiltInRegistries.FLUID.getTag(fluidTagKey);
-                        if (tagHolderList.isPresent()) {
-                            for (var holder : tagHolderList.get()) {
-                                rawStacks.add(EmiStack.of(holder.value()));
-                            }
-                        }
+                         BuiltInRegistries.FLUID.get(fluidTagKey).ifPresent(tagHolderList -> {
+							 for (Holder<Fluid> holder : tagHolderList) {
+							 	rawStacks.add(EmiStack.of(holder.value()));
+							 }
+                         });
                     } else {
                         @SuppressWarnings("unchecked")
+						  // TODO: is the original cleaner/better?
                         TagKey<Item> itemTagKey = (TagKey<Item>) rawKey;
-                        var tagHolderList = BuiltInRegistries.ITEM.getTag(itemTagKey);
+                        var tagHolderList = BuiltInRegistries.ITEM.get(itemTagKey);
                         if (tagHolderList.isPresent()) {
                             for (Holder<Item> holder : tagHolderList.get()) {
                                 rawStacks.add(EmiStack.of(holder.value()));
@@ -142,39 +141,39 @@ public class EmiStackGroup extends StackGroup {
         };
     }
 
-    public static String resolveTagRegistry(ResourceLocation tagLoc) {
+    public static String resolveTagRegistry(Identifier tagLoc) {
         if (tagLoc == null) return "minecraft:item";
 
         TagKey<Item> itemKey = TagKey.create(BuiltInRegistries.ITEM.key(), tagLoc);
-        if (BuiltInRegistries.ITEM.getTag(itemKey).filter(h -> h.size() > 0).isPresent()) {
+        if (BuiltInRegistries.ITEM.get(itemKey).filter(h -> h.size() > 0).isPresent()) {
             return "minecraft:item";
         }
 
         TagKey<Block> blockKey = TagKey.create(BuiltInRegistries.BLOCK.key(), tagLoc);
-        if (BuiltInRegistries.BLOCK.getTag(blockKey).filter(h -> h.size() > 0).isPresent()) {
+        if (BuiltInRegistries.BLOCK.get(blockKey).filter(h -> h.size() > 0).isPresent()) {
             return "minecraft:block";
         }
 
         TagKey<Fluid> fluidKey = TagKey.create(BuiltInRegistries.FLUID.key(), tagLoc);
-        if (BuiltInRegistries.FLUID.getTag(fluidKey).filter(h -> h.size() > 0).isPresent()) {
+        if (BuiltInRegistries.FLUID.get(fluidKey).filter(h -> h.size() > 0).isPresent()) {
             return "minecraft:fluid";
         }
 
         TagKey<EntityType<?>> entityKey = TagKey.create(BuiltInRegistries.ENTITY_TYPE.key(), tagLoc);
-        if (BuiltInRegistries.ENTITY_TYPE.getTag(entityKey).filter(h -> h.size() > 0).isPresent()) {
+        if (BuiltInRegistries.ENTITY_TYPE.get(entityKey).filter(h -> h.size() > 0).isPresent()) {
             return "minecraft:entity_type";
         }
 
-        if (BuiltInRegistries.ITEM.getTag(itemKey).isPresent()) {
+        if (BuiltInRegistries.ITEM.get(itemKey).isPresent()) {
             return "minecraft:item";
         }
-        if (BuiltInRegistries.BLOCK.getTag(blockKey).isPresent()) {
+        if (BuiltInRegistries.BLOCK.get(blockKey).isPresent()) {
             return "minecraft:block";
         }
-        if (BuiltInRegistries.FLUID.getTag(fluidKey).isPresent()) {
+        if (BuiltInRegistries.FLUID.get(fluidKey).isPresent()) {
             return "minecraft:fluid";
         }
-        if (BuiltInRegistries.ENTITY_TYPE.getTag(entityKey).isPresent()) {
+        if (BuiltInRegistries.ENTITY_TYPE.get(entityKey).isPresent()) {
             return "minecraft:entity_type";
         }
 
@@ -200,7 +199,7 @@ public class EmiStackGroup extends StackGroup {
                             String tagId = obj.has("id") ? obj.get("id").getAsString() : obj.has("tag") ? obj.get("tag").getAsString() : null;
                             if (tagId != null) {
                                 if (copy == null) copy = obj.deepCopy();
-                                copy.addProperty("registry", resolveTagRegistry(ResourceLocation.tryParse(tagId)));
+                                copy.addProperty("registry", resolveTagRegistry(Identifier.tryParse(tagId)));
                             }
                         } else {
                             String normReg = normalizeRegistry(reg);
@@ -213,7 +212,7 @@ public class EmiStackGroup extends StackGroup {
                     if (copy != null) return copy;
                 } else if (obj.has("id")) {
                     String idStr = obj.get("id").getAsString();
-                    ResourceLocation resLoc = ResourceLocation.tryParse(idStr);
+                    Identifier resLoc = Identifier.tryParse(idStr);
                     if (resLoc != null) {
                         JsonObject copy = obj.deepCopy();
                         if (BuiltInRegistries.MOB_EFFECT.containsKey(resLoc)) {
@@ -252,7 +251,7 @@ public class EmiStackGroup extends StackGroup {
             obj.addProperty("id", id);
             return obj;
         } else if (split.length == 2) {
-            ResourceLocation resLoc = ResourceLocation.tryParse(str);
+            Identifier resLoc = Identifier.tryParse(str);
             JsonObject obj = new JsonObject();
             obj.addProperty("id", str);
             if (resLoc != null && BuiltInRegistries.MOB_EFFECT.containsKey(resLoc)) {
@@ -264,7 +263,7 @@ public class EmiStackGroup extends StackGroup {
             }
             return obj;
         } else if (split.length == 1) {
-            ResourceLocation resLoc = ResourceLocation.tryParse("minecraft:" + str);
+            Identifier resLoc = Identifier.tryParse("minecraft:" + str);
             JsonObject obj = new JsonObject();
             obj.addProperty("id", "minecraft:" + str);
             if (resLoc != null && BuiltInRegistries.MOB_EFFECT.containsKey(resLoc)) {
@@ -300,7 +299,7 @@ public class EmiStackGroup extends StackGroup {
             }
         }
         String tagId = value.contains(":") ? value : "minecraft:" + value;
-        String registry = resolveTagRegistry(ResourceLocation.tryParse(tagId));
+        String registry = resolveTagRegistry(Identifier.tryParse(tagId));
         obj.addProperty("id", tagId);
         obj.addProperty("tag", tagId);
         obj.addProperty("registry", registry);
@@ -314,8 +313,8 @@ public class EmiStackGroup extends StackGroup {
             String registryName = GsonHelper.getAsString(obj, "registry", "minecraft:item");
             String tagId = GsonHelper.getAsString(obj, "id", GsonHelper.getAsString(obj, "tag", null));
             if (tagId != null) {
-                ResourceLocation regLoc = ResourceLocation.tryParse(registryName);
-                ResourceLocation idLoc = ResourceLocation.tryParse(tagId);
+                Identifier regLoc = Identifier.tryParse(registryName);
+                Identifier idLoc = Identifier.tryParse(tagId);
                 if (regLoc != null && idLoc != null) {
                     TagKey<?> tagKey = TagKey.create(ResourceKey.createRegistryKey(regLoc), idLoc);
                     ingredient = new TagEmiIngredient(tagKey, 1);
@@ -342,12 +341,12 @@ public class EmiStackGroup extends StackGroup {
         }
     }
 
-    public static EmiStackGroup parse(JsonElement json, ResourceLocation filenameId) {
+    public static EmiStackGroup parse(JsonElement json, Identifier filenameId) {
         try {
             if (!(json instanceof JsonObject obj)) throw new IllegalArgumentException("Not a JSON object");
 
-            ResourceLocation finalId = obj.has("id")
-                    ? ResourceLocation.parse(GsonHelper.getAsString(obj, "id"))
+            Identifier finalId = obj.has("id")
+                    ? Identifier.parse(GsonHelper.getAsString(obj, "id"))
                     : filenameId;
 
             String nameKey = obj.has("name") ? GsonHelper.getAsString(obj, "name") : null;
@@ -374,7 +373,7 @@ public class EmiStackGroup extends StackGroup {
                 throw new IllegalArgumentException("Contents or regex(es) must be present in group configuration.");
             }
 
-            Set<ResourceLocation> excluded = new HashSet<>();
+            Set<Identifier> excluded = new HashSet<>();
             if (GsonHelper.isArrayNode(obj, "exclusions")) {
                 for (JsonElement e : obj.getAsJsonArray("exclusions")) {
                     for (EmiStack s : getIngredientStacks(deserialize(e))) {
@@ -444,7 +443,7 @@ public class EmiStackGroup extends StackGroup {
     }
 
     @Override
-    public Set<ResourceLocation> getOptimizedIds() {
+    public Set<Identifier> getOptimizedIds() {
         if (regexes != null && !regexes.isEmpty()) {
             return null;
         }
@@ -454,7 +453,7 @@ public class EmiStackGroup extends StackGroup {
     @Override
     public boolean match(EmiIngredient stack) {
         if (!(stack instanceof EmiStack emiStack)) return false;
-        ResourceLocation stackId = emiStack.getId();
+        Identifier stackId = emiStack.getId();
         if (stackId == null) return false;
 
         if (excludedIds.contains(stackId)) return false;

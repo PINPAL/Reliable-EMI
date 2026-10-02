@@ -8,15 +8,15 @@ import dev.emi.emi.runtime.EmiDrawContext;
 import dev.emi.emi.screen.EmiScreenManager;
 import dev.emi.emi.screen.widget.SizedButtonWidget;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.List;
 import java.util.function.BooleanSupplier;
 
 public class ImageButton extends SizedButtonWidget {
-    private static final ResourceLocation DEFAULT_TEXTURE = ReliableEmi.res("textures/gui/buttons.png");
+    private static final Identifier DEFAULT_TEXTURE = ReliableEmi.res("textures/gui/buttons.png");
 
     private final BooleanSupplier isActiveSupplier;
     private final int baseU;
@@ -37,32 +37,32 @@ public class ImageButton extends SizedButtonWidget {
         this.matchScreenManagerVisibility = true;
     }
 
-    public void withTexture(ResourceLocation customTexture, int width, int height) {
+    public void withTexture(Identifier customTexture, int width, int height) {
         this.texture = customTexture;
         this.textureWidth = width;
         this.textureHeight = height;
     }
 
     @Override
-    public void renderWidget(GuiGraphics raw, int mouseX, int mouseY, float delta) {
+    public void extractContents(GuiGraphicsExtractor raw, int mouseX, int mouseY, float delta) {
         if (matchScreenManagerVisibility && EmiScreenManager.isDisabled()) return;
 
         this.active = isActiveSupplier.getAsBoolean();
         int currentV = baseV + (!this.active ? height * 2 : isMouseOver(mouseX, mouseY) ? height : 0);
 
-        RenderSystem.enableBlend();
-        RenderSystem.enableDepthTest();
+//        RenderSystem.enableBlend();
+//        RenderSystem.enableDepthTest();
         raw.blit(texture, getX(), getY(), baseU, currentV, width, height, textureWidth, textureHeight);
 
         if (isMouseOver(mouseX, mouseY) && text != null && active) {
             EmiDrawContext context = EmiDrawContext.wrap(raw);
             context.push();
-            raw.pose().translate(0f, 0f, 400f);
+            raw.pose().translate(0f, 0f);
             List<ClientTooltipComponent> texts = text.get().stream()
                     .map(EmiPort::ordered).map(ClientTooltipComponent::create).toList();
-            EmiRenderHelper.drawTooltip(Minecraft.getInstance().screen, context, texts, mouseX, mouseY);
+            EmiRenderHelper.drawTooltip(Minecraft.getInstance().gui.screen(), context, texts, mouseX, mouseY);
             context.pop();
         }
-        RenderSystem.disableBlend();
+//        RenderSystem.disableBlend();
     }
 }

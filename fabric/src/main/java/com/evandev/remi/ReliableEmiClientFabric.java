@@ -5,7 +5,7 @@ import com.evandev.remi.config.ReliableEmiConfig;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 
@@ -26,8 +26,8 @@ public class ReliableEmiClientFabric implements ClientModInitializer {
         ReliableEmiConfig.load();
 
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
-            dispatcher.register(ClientCommandManager.literal("remi")
-                    .then(ClientCommandManager.literal("reload")
+            dispatcher.register(ClientCommands.literal("remi")
+                    .then(ClientCommands.literal("reload")
                             .executes(ReliableEmiClientFabric::executeReload)
                     )
                     .executes(ReliableEmiClientFabric::executeReload)

@@ -5,19 +5,19 @@ import com.evandev.remi.config.ReliableEmiConfig;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import dev.emi.emi.screen.widget.EmiSearchWidget;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.WidgetSprites;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-
-import java.util.function.BiFunction;
 
 @Mixin(EditBox.class)
 public class EditBoxMixin {
@@ -27,41 +27,45 @@ public class EditBoxMixin {
             ReliableEmi.res("widget/text_field_highlighted")
     );
 
-    @WrapOperation(method = "renderWidget", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphics;blitSprite(Lnet/minecraft/resources/ResourceLocation;IIII)V"))
-    private void drawSearchWidgetBackground(GuiGraphics instance, ResourceLocation sprite, int x, int y, int width, int height, Operation<Void> original) {
+    @WrapOperation(method = "extractWidgetRenderState", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;blitSprite(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIII)V"))
+    private void drawSearchWidgetBackground(
+      GuiGraphicsExtractor instance, RenderPipeline renderPipeline, Identifier location, int x, int y, int width,
+      int height, Operation<Void> original
+    ) {
         EditBox editBox = (EditBox) (Object) this;
         if (editBox instanceof EmiSearchWidget && !ReliableEmiConfig.searchWidgetUseVanillaTexture) {
             int horizontalPadding = ReliableEmiConfig.searchWidgetHorizontalPadding;
             int verticalPadding = ReliableEmiConfig.searchWidgetVerticalPadding;
-            sprite = remi$SPRITES.get(editBox.isActive(), editBox.isFocused());
+            location = remi$SPRITES.get(editBox.isActive(), editBox.isFocused());
             x = x - horizontalPadding;
             y = y - verticalPadding;
             width = width + horizontalPadding * 2;
             height = height + verticalPadding * 2;
         }
-        original.call(instance, sprite, x, y, width, height);
+        original.call(instance, renderPipeline, location, x, y, width, height);
     }
 
-    @WrapOperation(method = "renderWidget", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphics;drawString(Lnet/minecraft/client/gui/Font;Ljava/lang/String;III)I", ordinal = 0), require = 0)
-    private int drawSuggestionString(GuiGraphics instance, Font font, String text, int x, int y, int color, Operation<Integer> original) {
+    @WrapOperation(method = "extractWidgetRenderState", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;text(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;III)V", ordinal = 0), require = 0)
+    private void drawSuggestionString(
+      GuiGraphicsExtractor instance, Font font, Component str, int x, int y, int color, Operation<Void> original) {
         EditBox editBox = (EditBox) (Object) this;
         if (editBox instanceof EmiSearchWidget) {
             color = ReliableEmiConfig.searchWidgetSuggestionTextColor;
         }
-        return original.call(instance, font, text, x, y, color);
+        original.call(instance, font, str, x, y, color);
     }
 
-    @WrapOperation(method = "renderWidget", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphics;drawString(Lnet/minecraft/client/gui/Font;Ljava/lang/String;IIIZ)I", ordinal = 0), require = 0)
-    private int drawSuggestionStringNeo(GuiGraphics instance, Font font, String text, int x, int y, int color, boolean dropShadow, Operation<Integer> original) {
+    @WrapOperation(method = "extractWidgetRenderState", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;text(Lnet/minecraft/client/gui/Font;Ljava/lang/String;IIIZ)V", ordinal = 0), require = 0)
+    private void drawSuggestionStringNeo(GuiGraphicsExtractor instance, Font font, String str, int x, int y, int color, boolean dropShadow, Operation<Integer> original) {
         EditBox editBox = (EditBox) (Object) this;
         if (editBox instanceof EmiSearchWidget) {
             color = ReliableEmiConfig.searchWidgetSuggestionTextColor;
         }
-        return original.call(instance, font, text, x, y, color, dropShadow);
+        original.call(instance, font, str, x, y, color, dropShadow);
     }
 
     @ModifyExpressionValue(
-            method = "renderWidget",
+            method = "extractWidgetRenderState",
             at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/components/EditBox;textColor:I", opcode = Opcodes.GETFIELD)
     )
     private int overrideTextColor(int original) {
@@ -70,16 +74,13 @@ public class EditBoxMixin {
     }
 
     @WrapOperation(
-            method = "renderWidget",
-            at = @At(value = "INVOKE", target = "Ljava/util/function/BiFunction;apply(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;")
+            method = "extractWidgetRenderState",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/EditBox;applyFormat(Ljava/lang/String;I)Lnet/minecraft/util/FormattedCharSequence;")
     )
-    private Object overrideFormattedTextColor(
-            BiFunction<String, Integer, FormattedCharSequence> instance,
-            Object text,
-            Object displayPos,
-            Operation<FormattedCharSequence> original
+    private FormattedCharSequence overrideFormattedTextColor(
+      EditBox instance, String text, int offset, Operation<FormattedCharSequence> original
     ) {
-        FormattedCharSequence sequence = original.call(instance, text, displayPos);
+        FormattedCharSequence sequence = original.call(instance, text, offset);
         EditBox editBox = (EditBox) (Object) this;
         if (editBox instanceof EmiSearchWidget) {
             int customColor = ReliableEmiConfig.searchWidgetTextColor;

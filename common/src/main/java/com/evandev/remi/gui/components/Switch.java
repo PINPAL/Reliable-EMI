@@ -1,16 +1,16 @@
 package com.evandev.remi.gui.components;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.evandev.ReliableEmi;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.input.InputWithModifiers;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public class Switch extends AbstractButton {
-    private static final ResourceLocation SWITCH_SPRITE = ReliableEmi.res("textures/gui/switch.png");
+    private static final Identifier SWITCH_SPRITE = ReliableEmi.res("textures/gui/switch.png");
 
     private boolean isChecked;
     private final boolean isEnabled = true;
@@ -24,7 +24,7 @@ public class Switch extends AbstractButton {
     }
 
     @Override
-    public void onPress() {
+    public void onPress(InputWithModifiers var1) {
         if (!isEnabled) return;
         isChecked = !isChecked;
         onCheckedChangeListener.onCheckedChanged(this, isChecked);
@@ -40,10 +40,10 @@ public class Switch extends AbstractButton {
     }
 
     @Override
-    public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        RenderSystem.enableDepthTest();
-        guiGraphics.setColor(1F, 1F, 1F, alpha);
-        RenderSystem.enableBlend();
+    public void extractContents(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+//        RenderSystem.enableDepthTest();
+//        guiGraphics.setColor(1F, 1F, 1F, alpha);
+//        RenderSystem.enableBlend();
         int u = isChecked ? width : 0;
         int v = !isEnabled ? height * 3 : isHovered ? height : isFocused() ? height * 2 : 0;
         guiGraphics.blit(SWITCH_SPRITE, getX() - 1, getY() - 1, u, v, width, height, width * 2, height * 4);

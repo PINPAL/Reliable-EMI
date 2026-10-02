@@ -20,7 +20,9 @@ public abstract class GridListConfigScreen extends Screen {
     protected GridListConfigScreen(String name, Screen parent) {
         super(ReliableEmi.text("gui", name));
         this.parent = parent;
-        this.tabNavigationBar = TabNavigationBar.builder(tabManager, 0).addTabs(new PrebuiltTab(name)).build();
+		// FIXME: this shit is fucked
+//        this.tabNavigationBar = TabNavigationBar.builder(tabManager, 0, 0, 0, 0).addTab(new PrebuiltTab(name)).build();
+        this.tabNavigationBar = TabNavigationBar.builder(tabManager, 0, 0, 0, 0).build();
     }
 
     protected abstract GridList<?> createList();
@@ -41,7 +43,7 @@ public abstract class GridListConfigScreen extends Screen {
 
     @Override
     public void onClose() {
-        minecraft.setScreen(parent);
+        minecraft.gui.setScreen(parent);
     }
 
     @Override
@@ -58,7 +60,7 @@ public abstract class GridListConfigScreen extends Screen {
         list.updateSize(width, layout);
         layout.arrangeElements();
         tabNavigationBar.setWidth(width);
-        tabNavigationBar.arrangeElements();
+        tabNavigationBar.arrangeElements(width);
         tabManager.setTabArea(new ScreenRectangle(0, tabNavigationBar.getRectangle().bottom(), width, height));
     }
 
