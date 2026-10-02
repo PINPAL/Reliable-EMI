@@ -6,25 +6,27 @@ import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.InputWithModifiers;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import org.jspecify.annotations.NonNull;
 
 public class Switch extends AbstractButton {
     private static final Identifier SWITCH_SPRITE = ReliableEmi.res("textures/gui/switch.png");
+	private static final int TEXTURE_WIDTH = 58;
+	private static final int TEXTURE_HEIGHT = 68;
 
     private boolean isChecked;
     private final boolean isEnabled = true;
     private OnCheckedChangeListener onCheckedChangeListener = (sw, checked) -> {};
 
     private Switch(int x, int y, Component message, boolean isChecked) {
-        super(x, y, 0, 0, message);
+        super(x, y, 29, 17, message);
         this.isChecked = isChecked;
-        this.width = 29;
-        this.height = 17;
     }
 
     @Override
-    public void onPress(InputWithModifiers var1) {
+    public void onPress(@NonNull InputWithModifiers var1) {
         if (!isEnabled) return;
         isChecked = !isChecked;
         onCheckedChangeListener.onCheckedChanged(this, isChecked);
@@ -41,12 +43,10 @@ public class Switch extends AbstractButton {
 
     @Override
     public void extractContents(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
-//        RenderSystem.enableDepthTest();
-//        guiGraphics.setColor(1F, 1F, 1F, alpha);
-//        RenderSystem.enableBlend();
         int u = isChecked ? width : 0;
-        int v = !isEnabled ? height * 3 : isHovered ? height : isFocused() ? height * 2 : 0;
-        guiGraphics.blit(SWITCH_SPRITE, getX() - 1, getY() - 1, u, v, width, height, width * 2, height * 4);
+        int v = !isEnabled ? height * 3 : isHovered() ? height : isFocused() ? height * 2 : 0;
+		int xPos = getX() + (isChecked ? 1 : 0); // offset right by 1 if checked to avoid shifting position
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, SWITCH_SPRITE, xPos, getY(), u, v, width, height, TEXTURE_WIDTH, TEXTURE_HEIGHT);
     }
 
     @FunctionalInterface

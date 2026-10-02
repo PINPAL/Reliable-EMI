@@ -2,9 +2,7 @@ package com.evandev.remi.gui;
 
 import com.evandev.remi.integration.emi.ScreenManager;
 import com.evandev.remi.gui.components.Switch;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.ActiveTextCollector;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractContainerWidget;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -12,6 +10,7 @@ import net.minecraft.client.gui.components.events.ContainerEventHandler;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +44,7 @@ public abstract class ListEntry extends AbstractContainerWidget {
     @Override
     public void extractWidgetRenderState(@NotNull GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         int startX = getX() + BORDER_WIDTH + PADDING;
-        int startY = getY() + BORDER_WIDTH + PADDING;
+        int startY = getY() + BORDER_WIDTH + PADDING + 2;
         renderBackground(guiGraphics);
         renderBorders(guiGraphics);
 
@@ -54,11 +53,13 @@ public abstract class ListEntry extends AbstractContainerWidget {
             int maxWidth = WIDTH - BORDER_WIDTH - PADDING - 46;
             var font = Minecraft.getInstance().font;
             if (font.width(title) < maxWidth) {
-                guiGraphics.text(font, title, startX, startY + 2, 0xFFFFFF);
+                guiGraphics.text(font, title, startX, startY, 0xFFFFFFFF);
             } else {
-//	            extractScrollingStringOverContents(guiGraphics, font, title, startX, startY, startX + maxWidth, startY + 2 + font.lineHeight, 0xFFFFFF);
-	            // FIXME: this shit is probably fucked
-	            extractScrollingStringOverContents(guiGraphics.textRendererForWidget(this, GuiGraphicsExtractor.HoveredTextEffects.NONE), title, 2);
+	            guiGraphics.textRendererForWidget(this, GuiGraphicsExtractor.HoveredTextEffects.NONE)
+	                       .acceptScrollingWithDefaultCenter(
+	                         title, startX, startX + maxWidth, startY,
+	                         startY + font.lineHeight
+	                       );
             }
         }
 
@@ -67,22 +68,19 @@ public abstract class ListEntry extends AbstractContainerWidget {
         if (shouldRenderSwitch()) {
             Switch sw = getSwitch();
             sw.setX(getX() + WIDTH - sw.getWidth() - BORDER_WIDTH - PADDING);
-            sw.setY(startY);
-            sw.extractContents(guiGraphics, mouseX, mouseY, partialTick);
+            sw.setY(startY + Minecraft.getInstance().font.lineHeight - sw.getHeight() + 2);
+            sw.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
         }
     }
 
+
     private void renderBorders(GuiGraphicsExtractor guiGraphics) {
-//        RenderSystem.enableBlend();
-        guiGraphics.blit(Screen.INWORLD_HEADER_SEPARATOR, getX(), getY(), 0, 0, getWidth(), 2, 32, 2);
-        guiGraphics.blit(Screen.INWORLD_FOOTER_SEPARATOR, getX(), getBottom(), 0, 0, getWidth(), 2, 32, 2);
-//        RenderSystem.disableBlend();
+	    guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Screen.INWORLD_HEADER_SEPARATOR, getX(), getY(), 0, 0, getWidth(), 2, 32, 2);
+	    guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Screen.INWORLD_FOOTER_SEPARATOR, getX(), getBottom(), 0, 0, getWidth(), 2, 32, 2);
     }
 
     private void renderBackground(GuiGraphicsExtractor guiGraphics) {
-//        RenderSystem.enableBlend();
         guiGraphics.blit(BACKGROUND, getX(), getY(), getRight(), getBottom(), getWidth(), getHeight(), 32, 32);
-//        RenderSystem.disableBlend();
     }
 
     @Override

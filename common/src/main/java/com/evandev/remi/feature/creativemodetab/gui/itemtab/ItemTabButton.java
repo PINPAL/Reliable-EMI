@@ -3,12 +3,9 @@ package com.evandev.remi.feature.creativemodetab.gui.itemtab;
 import com.evandev.ReliableEmi;
 import com.evandev.remi.config.ReliableEmiConfig;
 import com.evandev.remi.integration.emi.ScreenManager;
-import com.evandev.remi.util.GuiGraphicsUtils;
-import com.mojang.blaze3d.systems.RenderSystem;
 import dev.emi.emi.config.SidebarTheme;
 import dev.emi.emi.runtime.EmiDrawContext;
 import dev.emi.emi.screen.EmiScreenManager;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.TabButton;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -17,6 +14,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.CreativeModeTab;
 import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import java.lang.reflect.Method;
 
@@ -81,7 +79,8 @@ public class ItemTabButton extends TabButton {
         if (tab == null) return null;
         if (!checkedRecreativeMethod) {
             try {
-                recreativeIconMethod = CreativeModeTab.class.getMethod("recreative$getCustomIcon");
+	            //noinspection JavaReflectionMemberAccess
+	            recreativeIconMethod = CreativeModeTab.class.getMethod("recreative$getCustomIcon");
             } catch (Exception ignored) {
             }
             checkedRecreativeMethod = true;
@@ -108,19 +107,17 @@ public class ItemTabButton extends TabButton {
     }
 
     @Override
-    public void onClick(final MouseButtonEvent event, final boolean doubleClickY) {
+    public void onClick(final @NonNull MouseButtonEvent event, final boolean doubleClickY) {
         if (!isVisible()) return;
         super.onClick(event, doubleClickY);
         tabManager.onTabSelected(tab);
     }
 
     @Override
-    public void extractWidgetRenderState(@NotNull GuiGraphicsExtractor raw, int mouseX, int mouseY, float partialTick) {
+    public void extractWidgetRenderState(@NotNull GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         if (!isVisible()) return;
 
-//        RenderSystem.enableBlend();
-//        RenderSystem.enableDepthTest();
-        EmiDrawContext context = EmiDrawContext.wrap(raw);
+//        EmiDrawContext context = EmiDrawContext.wrap(guiGraphics);
         EmiScreenManager.SidebarPanel panel = ScreenManager.getTargetCreativeTabPanel();
         boolean isVanillaTheme = panel != null && panel.theme == SidebarTheme.VANILLA;
 
@@ -130,8 +127,8 @@ public class ItemTabButton extends TabButton {
         int iconX = getX() + (getWidth() - iconSize) / 2;
         int iconY = getY() + (getHeight() - iconSize) / 2;
 
-        raw.pose().pushMatrix();
-        raw.pose().translate(0.0f, 0.0f);
+        guiGraphics.pose().pushMatrix();
+        guiGraphics.pose().translate(0.0f, 0.0f);
 
         TabSprites sprites = isVanillaTheme ? HORIZONTAL_VANILLA_SPRITES : HORIZONTAL_SPRITES;
 
@@ -142,17 +139,17 @@ public class ItemTabButton extends TabButton {
             sprites = isVanillaTheme ? VERTICAL_VANILLA_SPRITES : VERTICAL_SPRITES;
         }
 
-        raw.blitSprite(RenderPipelines.GUI_TEXTURED, sprites.get(isSelected(), position), getX(), getY(), getWidth(), getHeight());
-        raw.pose().popMatrix();
+        guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, sprites.get(isSelected(), position), getX(), getY(), getWidth(), getHeight());
+        guiGraphics.pose().popMatrix();
 
         if (icon != null) {
-            raw.pose().pushMatrix();
-            raw.pose().translate(iconX, iconY);
-            raw.pose().scale(iconSize / 16f, iconSize / 16f);
-            raw.blit(icon, 0, 0, 0, 0, 16, 16, 16, 16);
-            raw.pose().popMatrix();
+            guiGraphics.pose().pushMatrix();
+            guiGraphics.pose().translate(iconX, iconY);
+            guiGraphics.pose().scale(iconSize / 16f, iconSize / 16f);
+            guiGraphics.blit(icon, 0, 0, 0, 0, 16, 16, 16, 16);
+            guiGraphics.pose().popMatrix();
         } else if (tab.creativeModeTab() != null) {
-            GuiGraphicsUtils.renderItem(raw, tab.creativeModeTab().getIconItem(), iconX, iconY, iconSize);
+	        guiGraphics.item(tab.creativeModeTab().getIconItem(), iconX, iconY);
         }
 
         if (isHovered && title != null) {
@@ -161,12 +158,10 @@ public class ItemTabButton extends TabButton {
                 lastDisplayTitle = ScreenManager.customIndexTitle;
             }
 
-	        raw.setTooltipForNextFrame(title, mouseX, mouseY);
+	        guiGraphics.setTooltipForNextFrame(title, mouseX, mouseY);
         } else if (!ReliableEmiConfig.showTitleInsteadOfPageNumbers) {
             ScreenManager.removeCustomIndexTitle(lastDisplayTitle != null ? lastDisplayTitle : title);
         }
-
-//        RenderSystem.disableBlend();
     }
 
     public enum ButtonStyle {TOP, LEFT, RIGHT}

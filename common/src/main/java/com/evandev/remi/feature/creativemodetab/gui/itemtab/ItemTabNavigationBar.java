@@ -125,7 +125,7 @@ public class ItemTabNavigationBar extends AbstractContainerWidget {
     @Override
     protected void extractWidgetRenderState(final @NonNull GuiGraphicsExtractor graphics, final int mouseX, final int mouseY, final float partialTick) {
         if (EmiScreenManager.isDisabled()) return;
-        tabButtons.forEach(b -> b.extractWidgetRenderState(graphics, mouseX, mouseY, partialTick));
+        tabButtons.forEach(b -> b.extractRenderState(graphics, mouseX, mouseY, partialTick));
     }
 
 	@Override
