@@ -1,3 +1,4 @@
 {
-  "type": "remi:banner_patterns"
+  "type": "remi:tag",
+  "tag": "minecraft:loom_patterns"
 }

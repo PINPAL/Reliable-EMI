@@ -9,17 +9,17 @@ import net.minecraft.resources.Identifier;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class CopperBlockItemGroup extends StackGroup {
+public class CopperChainBlockItemGroup extends StackGroup {
 	private static final Set<Identifier> COPPER_BLOCKS =
-	  BlockItemIds.COPPER_BLOCK.asList().stream().map(b -> b.item().identifier())
+	  BlockItemIds.COPPER_BARS.asList().stream().map(b -> b.item().identifier())
 	                           .collect(Collectors.toUnmodifiableSet());
 
-    public CopperBlockItemGroup() {
-        super(Identifier.withDefaultNamespace("copper_blocks"), null);
+    public CopperChainBlockItemGroup() {
+        super(Identifier.withDefaultNamespace("copper_chains"), null);
     }
 
-    @Override
-    public boolean match(EmiIngredient stack) {
-	    return stack instanceof EmiStack s && COPPER_BLOCKS.contains(s.getId());
-    }
+	@Override
+	public boolean match(EmiIngredient stack) {
+		return stack instanceof EmiStack s && COPPER_BLOCKS.contains(s.getId());
+	}
 }

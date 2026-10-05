@@ -29,13 +29,13 @@ import java.util.function.BiFunction;
 
 @SuppressWarnings("UnstableApiUsage")
 public class StackGroupManager {
+	private static final String[] TYPE_NAMESPACES = {"remi", "emixx"};
     private static final Map<String, BiFunction<Identifier, JsonObject, StackGroup>> typeRegistry = new HashMap<>();
     public static volatile List<StackGroup> stackGroups = List.of();
     private static volatile GroupIndex index = GroupIndex.EMPTY;
 
     static {
-        registerType("remi:group", (id, json) -> EmiStackGroup.parse(json, id));
-        registerType("emixx:group", (id, json) -> EmiStackGroup.parse(json, id));
+        registerType("group", (id, json) -> EmiStackGroup.parse(json, id));
 
         BiFunction<Identifier, JsonObject, StackGroup> tagFactory = (id, json) -> {
             String tagName = GsonHelper.getAsString(json, "tag");
@@ -56,22 +56,18 @@ public class StackGroupManager {
 
             return new EmiStackGroup(id, tagKey, Set.of(ingredient), Set.of(), List.of(), customName);
         };
-        registerType("remi:tag", tagFactory);
-        registerType("emixx:tag", tagFactory);
+        registerType("tag", tagFactory);
 
-        registerType("remi:spawn_eggs", (id, json) -> new SpawnEggItemGroup());
-        registerType("emixx:spawn_eggs", (id, json) -> new SpawnEggItemGroup());
-        registerType("remi:pressure_plates", (id, json) -> new PressurePlateItemGroup());
-        registerType("emixx:pressure_plates", (id, json) -> new PressurePlateItemGroup());
-        registerType("remi:minecarts", (id, json) -> new MinecartItemGroup());
-        registerType("emixx:minecarts", (id, json) -> new MinecartItemGroup());
-        registerType("remi:infested_blocks", (id, json) -> new InfestedBlockItemGroup());
-        registerType("emixx:infested_blocks", (id, json) -> new InfestedBlockItemGroup());
-        registerType("remi:copper_blocks", (id, json) -> new CopperBlockItemGroup());
-        registerType("emixx:copper_blocks", (id, json) -> new CopperBlockItemGroup());
+        registerType("spawn_eggs", (id, json) -> new SpawnEggItemGroup());
+        registerType("pressure_plates", (id, json) -> new PressurePlateItemGroup());
+        registerType("minecarts", (id, json) -> new MinecartItemGroup());
+        registerType("infested_blocks", (id, json) -> new InfestedBlockItemGroup());
+        registerType("copper_blocks", (id, json) -> new CopperBlockItemGroup());
+		registerType("copper_chains", (id, json) -> new CopperChainBlockItemGroup());
+	    registerType("animal_armors", (id, json) -> new AnimalArmorItemGroup());
+		registerType("trim_templates", (id, json) -> new TrimTemplatesItemGroup());
 
-        registerType("remi:regex", (id, json) -> EmiStackGroup.parse(json, id));
-        registerType("emixx:regex", (id, json) -> EmiStackGroup.parse(json, id));
+        registerType("regex", (id, json) -> EmiStackGroup.parse(json, id));
     }
 
     public static Map<Identifier, List<GroupedEmiStack<EmiStack>>> getItemToGroupedStacks() {
@@ -86,8 +82,20 @@ public class StackGroupManager {
         return index.groupToGroupStacks().get(group);
     }
 
-    public static void registerType(String type, BiFunction<Identifier, JsonObject, StackGroup> factory) {
-        typeRegistry.put(type, factory);
+	/**
+	 * Registers a new type of stack group.
+	 *
+	 * @param typeIdPath the type ID's path
+	 * @param factory the factory to use to create new stack groups of this type
+	 * @throws IllegalArgumentException if the type ID's path is invalid {@link Identifier#isValidPath}
+	 */
+	public static void registerType(String typeIdPath, BiFunction<Identifier, JsonObject, StackGroup> factory)
+	throws IllegalArgumentException
+	{
+		if (!Identifier.isValidPath(typeIdPath)) throw new IllegalArgumentException("Invalid type ID path: " + typeIdPath);
+		for (String namespace : TYPE_NAMESPACES) {
+		    typeRegistry.put(namespace + ":" + typeIdPath, factory);
+	    }
     }
 
     public static Identifier getTagGroupId(TagKey<?> tagKey) {
