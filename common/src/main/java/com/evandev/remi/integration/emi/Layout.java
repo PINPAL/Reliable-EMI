@@ -62,15 +62,12 @@ public class Layout {
     public static void render(EmiScreenManager.ScreenSpace screenSpace, EmiDrawContext context, List<Tile> tiles) {
         int es = ScreenManager.ENTRY_SIZE;
 
-//        RenderSystem.enableBlend();
-//        RenderSystem.depthMask(false);
         for (Tile tile : tiles) {
             int px = screenSpace.tx + tile.x * es;
             int py = screenSpace.ty + tile.y * es;
             int[] uv = getTileUV(tile);
             context.drawTexture(STACK_GROUP_TEXTURE, px, py, uv[0] * es, uv[1] * es, es, es, 144, 108);
         }
-//        RenderSystem.depthMask(true);
     }
 
     protected static int[] getTileUV(Tile tile){

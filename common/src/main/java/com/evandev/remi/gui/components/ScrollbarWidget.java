@@ -33,11 +33,10 @@ public class ScrollbarWidget extends AbstractWidget {
     @Override
     public final void extractWidgetRenderState(@NotNull GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         if (this.visible) {
-//            RenderSystem.enableBlend();
             SidebarPanelWithScrollOffset scrollPanel = (SidebarPanelWithScrollOffset) panel;
 
             int ENTRY_SIZE = 18;
-            int SUBPANEL_SEPERATOR_SIZE = 3;
+            int SUBPANEL_SEPARATOR_SIZE = 3;
             int x = this.getX();
             int y = this.getY();
             int panelPadding = 0;
@@ -48,9 +47,9 @@ public class ScrollbarWidget extends AbstractWidget {
                 panelPadding = 1;
                 trackPadding = 1 + panelPadding;
                 int headerOffset = panel.header ? 18 : 0;
-                int panelHeight = panel.theme.verticalPadding * 2 - SUBPANEL_SEPERATOR_SIZE;
+                int panelHeight = panel.theme.verticalPadding * 2 - SUBPANEL_SEPARATOR_SIZE;
                 for (EmiScreenManager.ScreenSpace space : panel.getSpaces()) {
-                    panelHeight += space.th * ENTRY_SIZE + SUBPANEL_SEPERATOR_SIZE;
+                    panelHeight += space.th * ENTRY_SIZE + SUBPANEL_SEPARATOR_SIZE;
                 }
 
                 trackHeight += trackPadding * 2;
@@ -80,8 +79,6 @@ public class ScrollbarWidget extends AbstractWidget {
             } else {
                 guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, THUMB_SPRITES, x, start, width, end - start);
             }
-
-//            RenderSystem.disableBlend();
         }
     }
 

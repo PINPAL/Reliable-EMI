@@ -43,7 +43,6 @@ public class StackGroupConfigScreen extends GridListConfigScreen {
     @Override
     protected void buildLayout() {
         LinearLayout headerContent = LinearLayout.vertical().spacing(4);
-//        headerContent.addChild(new StringWidget(title, font).alignCenter());
 	    headerContent.addChild(new StringWidget(title, font), LayoutSettings.defaults().alignHorizontallyCenter());
 
         EditBox searchBox = new EditBox(font, 0, 0, 200, 20, Component.translatable("remi.configuration.search"));

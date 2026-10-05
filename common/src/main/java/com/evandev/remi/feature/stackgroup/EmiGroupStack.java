@@ -154,9 +154,7 @@ public class EmiGroupStack extends EmiStack implements StackBatcher.Batchable {
         int es = ScreenManager.ENTRY_SIZE;
 
         if (isExpanded) {
-//            RenderSystem.enableBlend();
             context.drawTexture(EXPANDED_TEXTURE, x - 1, y - 1, 0, 0, es, es, es, es);
-//            RenderSystem.disableBlend();
         }
 
         if (batchedSprites != null && (flags & RENDER_ICON) == 0) {
@@ -188,9 +186,7 @@ public class EmiGroupStack extends EmiStack implements StackBatcher.Batchable {
             context.pop();
         }
 
-//        RenderSystem.enableBlend();
         context.drawTexture(isExpanded ? EXPANDED_INDICATOR_TEXTURE : COLLAPSED_INDICATOR_TEXTURE, x - 1, y - 1, 200, 0, es, es, es, es);
-//        RenderSystem.disableBlend();
     }
 
     @Override

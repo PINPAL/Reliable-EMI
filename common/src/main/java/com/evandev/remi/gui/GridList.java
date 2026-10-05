@@ -21,8 +21,6 @@ public abstract class GridList<Contents> extends ContainerObjectSelectionList<Gr
         super(Minecraft.getInstance(), screen.width, screen.height, 0, TripleEntry.HEIGHT);
         this.screen = screen;
         centerListVertically = false;
-		// FIXME: wtf does this shit do?
-//        setRenderHeader(true, 16);
     }
 
     @Override

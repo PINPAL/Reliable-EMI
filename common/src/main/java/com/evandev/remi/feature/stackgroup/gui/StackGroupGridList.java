@@ -272,7 +272,9 @@ public class StackGroupGridList extends GridList<StackGroup> {
             guiGraphics.pose().pushMatrix();
 
             if (isExpanded) {
-                guiGraphics.pose().translate(0, 0);
+				// FIXME: Need to implement nextStratum() to fix Z-ordering as part of the list itself not the entry
+	            // KNOWN ISSUE: currently next row will be drawn on top of this
+//	            guiGraphics.nextStratum();
                 int dropDownHeight = rows * ScreenManager.ENTRY_SIZE;
 
                 guiGraphics.fill(startX - 2, itemY - 2, startX + 8 * ScreenManager.ENTRY_SIZE + 2, itemY + dropDownHeight + 2, 0xFF1A1A1A);
