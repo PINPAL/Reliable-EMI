@@ -258,7 +258,8 @@ public class ReliableEmiConfig {
         EmiConfig.loadConfig();
 
         var client = Minecraft.getInstance();
-        if (client.gui != null && client.gui.screen() != null && !EmiScreenManager.isDisabled()) {
+	    //noinspection ConstantValue (Depending on environment either client/client.gui may be null on NeoForge/Fabric respectively)
+	    if (client != null && client.gui != null && client.gui.screen() != null && !EmiScreenManager.isDisabled()) {
             EmiScreenManager.addWidgets(client.gui.screen());
         }
         if (EmiSearch.bakedStacks != null) {
