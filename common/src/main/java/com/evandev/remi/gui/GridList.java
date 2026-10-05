@@ -75,7 +75,7 @@ public abstract class GridList<Contents> extends ContainerObjectSelectionList<Gr
             int xOffset = 0;
             int startX = (listWidget.screen.width - WIDTH) / 2;
             for (ListEntry entry : children) {
-                entry.setPosition(startX + xOffset, listWidget.getY());
+                entry.setPosition(startX + xOffset, getY());
                 entry.extractWidgetRenderState(guiGraphicsExtractor, mouseX, mouseY, partialTick);
                 xOffset += ListEntry.WIDTH + GUTTER * 2;
             }
