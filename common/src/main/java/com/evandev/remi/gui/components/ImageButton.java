@@ -10,6 +10,7 @@ import dev.emi.emi.screen.widget.SizedButtonWidget;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 
 import java.util.List;
@@ -50,9 +51,7 @@ public class ImageButton extends SizedButtonWidget {
         this.active = isActiveSupplier.getAsBoolean();
         int currentV = baseV + (!this.active ? height * 2 : isMouseOver(mouseX, mouseY) ? height : 0);
 
-//        RenderSystem.enableBlend();
-//        RenderSystem.enableDepthTest();
-        raw.blit(texture, getX(), getY(), baseU, currentV, width, height, textureWidth, textureHeight);
+        raw.blit(RenderPipelines.GUI_TEXTURED, texture, getX(), getY(), baseU, currentV, width, height, textureWidth, textureHeight);
 
         if (isMouseOver(mouseX, mouseY) && text != null && active) {
             EmiDrawContext context = EmiDrawContext.wrap(raw);
@@ -63,6 +62,5 @@ public class ImageButton extends SizedButtonWidget {
             EmiRenderHelper.drawTooltip(Minecraft.getInstance().gui.screen(), context, texts, mouseX, mouseY);
             context.pop();
         }
-//        RenderSystem.disableBlend();
     }
 }
