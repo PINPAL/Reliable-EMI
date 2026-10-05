@@ -31,7 +31,7 @@ public abstract class GridList<Contents> extends ContainerObjectSelectionList<Gr
     }
 
     @Override
-    public int maxScrollAmount() {
+    protected int scrollBarX() {
         return this.width - 6;
     }
 
