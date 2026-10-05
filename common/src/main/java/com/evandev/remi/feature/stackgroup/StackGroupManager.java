@@ -58,12 +58,17 @@ public class StackGroupManager {
         };
         registerType("tag", tagFactory);
 
+		BiFunction<Identifier, JsonObject, StackGroup> copperFactory = (id, json) -> {
+			String registry = GsonHelper.getAsString(json, "registry", "minecraft");
+			String key = GsonHelper.getAsString(json, "key", id.getPath());
+			return new CopperCollectionGroup(id, registry, key);
+		};
+		registerType("copper_collection", copperFactory);
+
         registerType("spawn_eggs", (id, json) -> new SpawnEggItemGroup());
         registerType("pressure_plates", (id, json) -> new PressurePlateItemGroup());
         registerType("minecarts", (id, json) -> new MinecartItemGroup());
         registerType("infested_blocks", (id, json) -> new InfestedBlockItemGroup());
-        registerType("copper_blocks", (id, json) -> new CopperBlockItemGroup());
-		registerType("copper_chains", (id, json) -> new CopperChainBlockItemGroup());
 	    registerType("animal_armors", (id, json) -> new AnimalArmorItemGroup());
 		registerType("trim_templates", (id, json) -> new TrimTemplatesItemGroup());
 

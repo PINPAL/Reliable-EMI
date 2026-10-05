@@ -1,3 +1,5 @@
 {
-  "type": "remi:copper_blocks"
+  "type": "remi:copper_collection",
+  "registry": "minecraft",
+  "key": "COPPER_BLOCK"
 }
