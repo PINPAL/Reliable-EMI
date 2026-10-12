@@ -44,22 +44,26 @@ public class CreativeModeTabGui {
     }
 
     static {
-        buttonPrevious = new ImageButton(12, 12, 0, 0, () -> CreativeModeTabManager.scrollOffset > 0,
-                b -> CreativeModeTabManager.previousPage());
-        buttonPrevious.matchScreenManagerVisibility();
-        buttonPrevious.withTexture(ReliableEmi.res("textures/gui/scroll_left.png"), 12, 36);
-        buttonNext = new ImageButton(12, 12, 0, 0, () -> CreativeModeTabManager.scrollOffset < CreativeModeTabManager.getMaxScroll(),
-                b -> CreativeModeTabManager.nextPage());
-        buttonNext.matchScreenManagerVisibility();
-        buttonNext.withTexture(ReliableEmi.res("textures/gui/scroll_right.png"), 12, 36);
-        buttonScrollDown = new ImageButton(12, 12, 0, 0, () -> CreativeModeTabManager.scrollOffset < CreativeModeTabManager.getMaxScroll(),
-                b -> CreativeModeTabManager.nextPage());
-        buttonScrollDown.matchScreenManagerVisibility();
-        buttonScrollDown.withTexture(ReliableEmi.res("textures/gui/scroll_down.png"), 12, 36);
-        buttonScrollUp = new ImageButton(12, 12, 0, 0, () -> CreativeModeTabManager.scrollOffset > 0,
-                b -> CreativeModeTabManager.previousPage());
-        buttonScrollUp.matchScreenManagerVisibility();
-        buttonScrollUp.withTexture(ReliableEmi.res("textures/gui/scroll_up.png"), 12, 36);
+	    buttonPrevious = new ImageButton(
+	      12, 12, 0, 0, () -> CreativeModeTabManager.scrollOffset > 0,
+	      b -> CreativeModeTabManager.previousPage(),true,
+	      ReliableEmi.res("textures/gui/scroll_left.png"), 12, 36
+	    );
+	    buttonNext = new ImageButton(
+	      12, 12, 0, 0, () -> CreativeModeTabManager.scrollOffset < CreativeModeTabManager.getMaxScroll(),
+	      b -> CreativeModeTabManager.nextPage(), true,
+	      ReliableEmi.res("textures/gui/scroll_right.png"), 12, 36
+	    );
+	    buttonScrollDown = new ImageButton(
+	      12, 12, 0, 0, () -> CreativeModeTabManager.scrollOffset < CreativeModeTabManager.getMaxScroll(),
+	      b -> CreativeModeTabManager.nextPage(), true,
+	      ReliableEmi.res("textures/gui/scroll_down.png"), 12, 36
+	    );
+	    buttonScrollUp = new ImageButton(
+	      12, 12, 0, 0, () -> CreativeModeTabManager.scrollOffset > 0,
+	      b -> CreativeModeTabManager.previousPage(), true,
+	      ReliableEmi.res("textures/gui/scroll_up.png"), 12, 36
+	    );
     }
 
     public static TabTheme currentTheme() {
