@@ -1,9 +1,11 @@
 package com.evandev.remi.mixin.emi;
 
 import com.evandev.remi.config.ReliableEmiConfig;
+import com.evandev.remi.config.ReliableEmiConfigScreen;
 import com.evandev.remi.feature.creativemodetab.gui.CreativeModeTabGui;
 import com.evandev.remi.feature.stackgroup.EmiGroupStack;
 import com.evandev.remi.feature.workstation.WorkstationSidebarManager;
+import com.evandev.remi.gui.components.ImageButton;
 import com.evandev.remi.gui.components.ScrollbarWidget;
 import com.evandev.remi.integration.emi.Layout;
 import com.evandev.remi.integration.emi.ScreenManager;
@@ -12,6 +14,7 @@ import com.evandev.remi.mixin.minecraft.accessor.AbstractContainerScreenAccessor
 import com.evandev.remi.mixin.minecraft.accessor.SlotWrapperAccessor;
 import com.evandev.remi.util.SidebarPanelWithScrollOffset;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -20,6 +23,8 @@ import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.api.widget.Bounds;
 import dev.emi.emi.config.*;
+import dev.emi.emi.runtime.EmiDrawContext;
+import dev.emi.emi.screen.EmiScreenBase;
 import dev.emi.emi.screen.EmiScreenManager;
 import dev.emi.emi.screen.widget.EmiSearchWidget;
 import dev.emi.emi.search.EmiSearch;
@@ -27,11 +32,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.commands.arguments.item.ItemInput;
-import net.minecraft.commands.arguments.item.ItemParser;
 import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.permissions.Permissions;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -47,8 +51,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.awt.*;
 import java.util.List;
-import java.util.Optional;
 
 @Mixin(value = EmiScreenManager.class, remap = false)
 public abstract class EmiScreenManagerMixin {
@@ -59,6 +63,13 @@ public abstract class EmiScreenManagerMixin {
     private static final int REMI_VANILLA_BACKGROUND_OFFSET = 11;
     @Unique
     private static final int REMI_CORNER_BUTTON_SPACE = 22;
+	@Unique
+	private static final ImageButton remi$configBtn = new ImageButton(
+	  20, 20, 236, 0, () -> true,
+	  (w) -> Minecraft.getInstance().gui.setScreen(ReliableEmiConfigScreen.createScreen(Minecraft.getInstance().gui.screen())),
+	  List.of(Component.translatable("remi.configuration.title"))
+	);
+
     @Shadow
     public static EmiSearchWidget search;
     @Shadow
@@ -132,7 +143,8 @@ public abstract class EmiScreenManagerMixin {
     private static boolean remi$areCornerButtonsVisible() {
         boolean visible = !EmiScreenManager.isDisabled();
         return EmiConfig.emiConfigButtonVisibility.resolve(visible)
-                || EmiConfig.recipeTreeButtonVisibility.resolve(visible);
+                || EmiConfig.recipeTreeButtonVisibility.resolve(visible)
+                || ReliableEmiConfig.showRemiConfigButton;
     }
 
     @Unique
@@ -263,6 +275,30 @@ public abstract class EmiScreenManagerMixin {
             search.update();
         }
     }
+	@Inject(at = @At(value = "INVOKE", target = "Ldev/emi/emi/screen/EmiScreenManager;updateSidebarButtons()V"), method = "addWidgets")
+	private static void addREMIConfigButton(Screen screen, CallbackInfo ci) {
+		remi$configBtn.setX(46);
+		remi$configBtn.setY(screen.height - 22);
+	}
+
+	@Inject(method="renderWidgets", at = @At(value = "INVOKE", target = "Ldev/emi/emi/screen/widget/SizedButtonWidget;extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V", ordinal = 1, shift = At.Shift.AFTER))
+	private static void renderREMIConfigBtn(
+	  EmiDrawContext context, int mouseX, int mouseY, float delta, EmiScreenBase base, CallbackInfo ci) {
+		remi$configBtn.extractRenderState(context.raw(), mouseX, mouseY, delta);
+	}
+
+	@Inject(
+	  method = "render", at = @At(value = "FIELD", opcode = Opcodes.PUTFIELD, ordinal = 1,
+	                              target = "Ldev/emi/emi/screen/widget/SizedButtonWidget;visible:Z"))
+	private static void setREMIConfigBtnVisibility(CallbackInfo ci) {
+		remi$configBtn.visible = ReliableEmiConfig.showRemiConfigButton;
+	}
+
+	@ModifyReturnValue(method =  "getDebugTextX", at = @At(value = "RETURN"))
+	private static int modifyDebugTextX(int original) {
+		// Offset to account for REMI config button
+		return remi$configBtn.visible ? original + 22 : original;
+	}
 
     @Inject(at = @At("RETURN"), method = "mouseScrolled", cancellable = true)
     private static void mouseScrolled(double mouseX, double mouseY, double amount,
@@ -512,6 +548,7 @@ public abstract class EmiScreenManagerMixin {
                 cir.setReturnValue(true);
             }
         }
+		if (remi$configBtn.mouseClicked(event, false)) cir.setReturnValue(true);
     }
 
     @Inject(method = "mouseReleased", at = @At("TAIL"))

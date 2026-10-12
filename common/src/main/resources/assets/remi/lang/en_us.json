@@ -173,6 +173,8 @@
   "remi.configuration.emiOnlyInRecipeBook.tooltip": "When enabled, EMI will only be active when the vanilla Recipe Book is toggled open.",
   "remi.configuration.disableEmiGlobalConfig": "Disable EMI Global Config",
   "remi.configuration.disableEmiGlobalConfig.tooltip": "Prevents EMI from applying settings from the global config file (~/.minecraft/global/emi/global.css), forcing it to use the instance config.",
+  "remi.configuration.showRemiConfigButton": "Show Reliable EMI Config Button",
+  "remi.configuration.showRemiConfigButton.tooltip": "When enabled, a button will be added adjacent to the original EMI config button to open this config screen.",
   "remi.configuration.disablePaginationWrapping": "Disable Pagination Wrapping",
   "remi.configuration.disablePaginationWrapping.tooltip": "Don't wrap around to the first/last page.",
   "remi.configuration.scrollInsteadOfPagination": "Enable Scroll Mode",
