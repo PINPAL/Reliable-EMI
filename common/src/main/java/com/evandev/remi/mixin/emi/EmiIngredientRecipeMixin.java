@@ -4,7 +4,6 @@ import com.evandev.ReliableEmi;
 import com.evandev.remi.config.ReliableEmiConfig;
 import com.evandev.remi.feature.stackgroup.StackGroupManager;
 import com.evandev.remi.integration.emi.StackManager;
-import com.mojang.blaze3d.systems.RenderSystem;
 import dev.emi.emi.api.recipe.EmiIngredientRecipe;
 import dev.emi.emi.api.widget.ButtonWidget;
 import dev.emi.emi.api.widget.WidgetHolder;

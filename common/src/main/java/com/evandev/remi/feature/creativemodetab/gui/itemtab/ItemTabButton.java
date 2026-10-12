@@ -4,7 +4,6 @@ import com.evandev.ReliableEmi;
 import com.evandev.remi.config.ReliableEmiConfig;
 import com.evandev.remi.integration.emi.ScreenManager;
 import dev.emi.emi.config.SidebarTheme;
-import dev.emi.emi.runtime.EmiDrawContext;
 import dev.emi.emi.screen.EmiScreenManager;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.TabButton;

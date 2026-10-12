@@ -51,7 +51,6 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.awt.*;
 import java.util.List;
 
 @Mixin(value = EmiScreenManager.class, remap = false)
@@ -66,7 +65,7 @@ public abstract class EmiScreenManagerMixin {
 	@Unique
 	private static final ImageButton remi$configBtn = new ImageButton(
 	  20, 20, 236, 0, () -> true,
-	  (w) -> Minecraft.getInstance().gui.setScreen(ReliableEmiConfigScreen.createScreen(Minecraft.getInstance().gui.screen())),
+	  _ -> Minecraft.getInstance().gui.setScreen(ReliableEmiConfigScreen.createScreen(Minecraft.getInstance().gui.screen())),
 	  List.of(Component.translatable("remi.configuration.title"))
 	);
 

@@ -13,7 +13,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.CreativeModeTab;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 

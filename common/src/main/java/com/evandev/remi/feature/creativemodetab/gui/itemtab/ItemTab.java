@@ -7,6 +7,7 @@ import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import java.util.function.Consumer;
 
@@ -18,8 +19,8 @@ public record ItemTab(CreativeModeTab creativeModeTab) implements Tab {
     }
 
 	@Override
-	public Component getTabExtraNarration() {
-		return null;
+	public @NonNull Component getTabExtraNarration() {
+		return Component.empty();
 	}
 
 	@Override

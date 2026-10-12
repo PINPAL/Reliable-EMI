@@ -118,7 +118,7 @@ public class ItemTabNavigationBar extends AbstractContainerWidget {
     }
 
     @Override
-    public List<? extends GuiEventListener> children() {
+    public @NonNull List<? extends GuiEventListener> children() {
         return this.tabButtons;
     }
 

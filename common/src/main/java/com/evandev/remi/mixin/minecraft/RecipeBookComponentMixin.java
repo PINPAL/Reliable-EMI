@@ -6,7 +6,6 @@ import dev.emi.emi.config.RecipeBookAction;
 import dev.emi.emi.screen.EmiScreenManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.recipebook.RecipeBookComponent;
-import net.minecraft.world.inventory.RecipeBookMenu;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;

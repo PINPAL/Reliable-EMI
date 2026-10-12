@@ -5,7 +5,6 @@ import com.evandev.remi.feature.stackgroup.EmiGroupStack;
 import com.evandev.remi.feature.stackgroup.GroupedEmiStack;
 import com.evandev.remi.feature.stackgroup.StackGroupManager;
 import com.evandev.remi.feature.stackgroup.data.StackGroup;
-import com.mojang.blaze3d.systems.RenderSystem;
 import dev.emi.emi.api.stack.Comparison;
 import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.config.SidebarType;

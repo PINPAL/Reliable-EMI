@@ -114,7 +114,7 @@ public class ScrollbarWidget extends AbstractWidget {
     }
 
     @Override
-    protected void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
+    protected void updateWidgetNarration(@NonNull NarrationElementOutput narrationElementOutput) {
     }
 
     public void stopDragging() {
